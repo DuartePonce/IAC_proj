@@ -2,7 +2,6 @@ DISPLAYS   EQU 0A000H  ; POUT-1
 TEC_LIN    EQU 0C000H  ; POUT-2
 TEC_COL    EQU 0E000H  ; PIN
 LINHA      EQU 1       ; linha a testar (4� linha, 1000b)
-
 MASCARA    EQU 0FH     ; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
 
 ;*********************************************************************
@@ -14,7 +13,8 @@ inicio:
     MOV  R3, TEC_COL   ; endere�o do perif�rico das colunas
     MOV  R4, DISPLAYS  ; endere�o do perif�rico dos displays
     MOV  R5, MASCARA   ; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
-    MOV  R7, 2
+    MOV  R7, 2         ; multiplicador
+    MOV  R8, 8         ; max lin
 
 ; corpo principal do programa
 ciclo:
@@ -37,12 +37,12 @@ espera_tecla:
     JMP ha_tecla
 
 linha_seguinte:
-    CMP R6, -8
+    CMP R6, R8
     JZ reset_linha
     MUL  R6, R7
     JMP   espera_tecla 
                     
-ha_tecla:              ; neste ciclo espera-se at� NENHUMA tecla estar premida
+ha_tecla:              
     MOV  R1, LINHA     ; testar a linha 4  (R1 tinha sido alterado)
     MOVB [R2], R1      ; escrever no perif�rico de sa�da (linhas)
     MOVB R0, [R3]      ; ler do perif�rico de entrada (colunas)
