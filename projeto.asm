@@ -17,7 +17,7 @@ LIN        EQU 26
 COL        EQU 24
 IMAGEM1    EQU 0
 IMAGEM2    EQU 1
-
+ATRASO			EQU	400H		; atraso para limitar a velocidade de movimento do boneco
 
 ;*********************************************************************************
 ;Cores
@@ -171,16 +171,16 @@ linha_pixel_seg:
     JNZ  desenha_pixels
 
 posicao_asteroide:
-    MOV  R1, 0
-    MOV  R2, 0 
+    MOV  R1, 0                          ; defenir linha
+    MOV  R2, 0                          ; defenir coluna
 	MOV	 R4, asteroide_n_mineravel	    ; endereço da tabela que define o boneco
-    MOV  R5, [R4]			            ; linha do boneco
-    MOV  R8, [R4]
+    MOV  R5, [R4]			            ; comprimento do asteroide
+    MOV  R8, [R4]                       ; altura do asteroide
     ADD	 R4, 2
     MOV  R6, [R4]	                    ; coluna do boneco
     ADD	 R4, 2
     
-desenha_pixels_as:       		            ; desenha os pixels do boneco a partir da tabela
+desenha_pixels_as:       		        ; desenha os pixels do boneco a partir da tabela
 	MOV	 R3, [R4]			            ; obtém a cor do próximo pixel do boneco
 	MOV  [DEFINE_LINHA], R1	            ; seleciona a linha
 	MOV  [DEFINE_COLUNA], R2	        ; seleciona a coluna
@@ -188,7 +188,7 @@ desenha_pixels_as:       		            ; desenha os pixels do boneco a partir da
 	ADD	 R4, 2			                ; endereço da cor do próximo pixel (2 porque cada cor de pixel é uma word)
     ADD  R2, 1                          ; próxima coluna
     SUB  R5, 1			                ; menos uma coluna para tratar
-    JNZ  desenha_pixels_as                 ; continua até percorrer toda a largura do objeto
+    JNZ  desenha_pixels_as              ; continua até percorrer toda a largura do objeto
     
 linha_pixel_seg_as:
     MOV  R5, R8
