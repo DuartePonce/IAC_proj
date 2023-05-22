@@ -74,9 +74,9 @@ ha_tecla:
     MOV  R1, LINHA     ; testar a linha base ( 1 )
     MOVB [R2], R1      ; escrever no periferico de saida (linhas)
     MOVB R0, [R3]      ; ler do periferico de entrada (colunas)
-    AND  R0, R5        ; elimina bits para al�m dos bits 0-3
-    CMP  R0, 0         ; h� tecla premida?
-    JNZ  ha_tecla      ; se ainda houver uma tecla premida, espera at� n�o haver
+    AND  R0, R5        ; elimina bits para alem dos bits 0-3
+    CMP  R0, 0         ; ha tecla premida?
+    JNZ  ha_tecla      ; se ainda houver uma tecla premida, espera ate nao haver
     
     JMP  teclado_var   ; repete ciclo
 
@@ -88,5 +88,5 @@ ver_tecla:
     JMP teclado_var    ; jump feito para resetar o valor dos registros tipo o 8
 
 tecla_1:
-    MOVB [R4], R1 
+    
     JMP ha_tecla 
