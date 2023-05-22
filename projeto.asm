@@ -9,11 +9,26 @@ LINHA      EQU 1       ; Variável de linha
 MASCARA    EQU 0FH     ; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
 N_LINHAS   EQU  32	   ; número de linhas do ecrã (altura)
 N_COLUNAS  EQU  64	   ; número de colunas do ecrã (largura)
-Vermelho  EQU 0FF00H  
+LARGURA    EQU 16
+ALTURA     EQU 6
+LIN        EQU 26
+COL        EQU 24
+IMAGEM1    EQU 0
+IMAGEM2    EQU 1
 
-;definir variaveis para cada imagem maybe fixe e tecla carregada
 
 ;*********************************************************************************
+;Cores
+;*********************************************************************************
+Vermelho        EQU 0FF00H  
+ROXO_ESCURO     EQU 0F829H
+ROXO_CLARO      EQU 0F62AH
+PRETO           EQU 0F000H
+CINZENTO        EQU 0FBBBH
+;definir variaveis para cada imagem maybe fixe e tecla carregada
+
+
+;*******;***********************************************************************************************************************************************************
 ;Comandos a declarar 
 ;*********************************************************************************
 
@@ -27,6 +42,19 @@ SELECIONA_CENARIO_FUNDO  EQU COMANDOS + 42H		; endereço do comando para selecio
 SOM                      EQU COMANDOS + 48H     ; Seleciona o audio
 REPRODUCAO               EQU COMANDOS + 5AH     ; Reproduz o audio  
 
+;*********************************************************************************
+;Zona de dados
+;*********************************************************************************
+PLACE 0100H
+painel_lista:
+    WORD LARGURA
+    WORD ALTURA
+    WORD 0,0,0, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, 0,0,0
+    WORD 0, ROXO_ESCURO, ROXO_ESCURO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_ESCURO, ROXO_ESCURO, 0
+    WORD 0, ROXO_ESCURO, ROXO_CLARO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, ROXO_CLARO, ROXO_ESCURO, 0
+    WORD ROXO_ESCURO, ROXO_ESCURO, ROXO_CLARO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, PRETO, CINZENTO, CINZENTO, ROXO_CLARO, ROXO_ESCURO, ROXO_ESCURO
+    WORD ROXO_ESCURO, ROXO_CLARO, ROXO_CLARO, CINZENTO, PRETO, CINZENTO, PRETO, CINZENTO, CINZENTO, PRETO, PRETO, PRETO, CINZENTO, ROXO_CLARO, ROXO_CLARO, ROXO_ESCURO
+    WORD ROXO_ESCURO, ROXO_CLARO, ROXO_CLARO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, PRETO, CINZENTO, CINZENTO, ROXO_CLARO, ROXO_CLARO, ROXO_ESCURO
 
 ;*********************************************************************************
 ;Codigo principal
@@ -38,8 +66,9 @@ apaga_imagem:
     MOV  [APAGA_ECRÃ], R1	                ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
 
 menu_principal:
-    MOV	 R1, 0			                    ; cenário de fundo número 0
-    MOV  [SELECIONA_CENARIO_FUNDO], R1	    ; seleciona o cenário de fundo
+    MOV	 R1, IMAGEM1			                    ; cenário de fundo número 0
+    MOV  [SELECIONA_CENARIO_FUNDO], R1	            ; seleciona o cenário de fundo
+    JMP  fundo_jogo
 
 teclado_var:                                ; inicializacao dos registos referentes ao teclado
     MOV  R2, TEC_LIN                        ; endereco do periferico das linhas
@@ -90,3 +119,37 @@ ver_tecla:
 tecla_1:
     MOVB [R4], R1 
     JMP ha_tecla 
+
+;*********************************************************************************
+;Codigo painel
+;*********************************************************************************
+fundo_jogo:
+    MOV	 R1, IMAGEM2			                    ; cenário de fundo número 1
+    MOV  [SELECIONA_CENARIO_FUNDO], R1	            ; seleciona o cenário de fundo
+
+
+posição_boneco:
+    MOV  R1, LIN
+    MOV  R2, COL 
+	MOV	 R4, painel_lista		; endereço da tabela que define o boneco
+    MOV  R5, [R4]			    ; linha do boneco
+    MOV  R8, [R4]
+    ADD	 R4, 2
+    MOV  R6, [R4]	            ; coluna do boneco
+    ADD	 R4, 2
+
+desenha_pixels:       		; desenha os pixels do boneco a partir da tabela
+	MOV	 R3, [R4]			; obtém a cor do próximo pixel do boneco
+	MOV  [DEFINE_LINHA], R1	; seleciona a linha
+	MOV  [DEFINE_COLUNA], R2	; seleciona a coluna
+	MOV  [DEFINE_PIXEL], R3	; altera a cor do pixel na linha e coluna selecionadas
+	ADD	 R4, 2			    ; endereço da cor do próximo pixel (2 porque cada cor de pixel é uma word)
+    ADD  R2, 1               ; próxima coluna
+    SUB  R5, 1			; menos uma coluna para tratar
+    JNZ  desenha_pixels      ; continua até percorrer toda a largura do objeto
+
+linha_pixel_seg:
+    MOV  R5, R8
+    MOV  R2, COL
+    ADD  R1, 1
+    JMP desenha_pixels
