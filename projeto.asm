@@ -19,6 +19,7 @@ IMAGEM1    EQU 0
 IMAGEM2    EQU 1
 ATRASO			EQU	400H		; atraso para limitar a velocidade de movimento do boneco
 COLUNA_SONDA    EQU 32
+LINHA_SONDA   EQU 25
 
 ;*********************************************************************************
 ;Cores
@@ -28,7 +29,7 @@ ROXO_ESCURO     EQU 0F829H
 ROXO_CLARO      EQU 0F62AH
 PRETO           EQU 0F000H
 CINZENTO        EQU 0FBBBH
-CASTANHO        EQU 0F642H
+VERDE           EQU 0F6F6H
 ;definir variaveis para cada imagem maybe fixe e tecla carregada
 
 
@@ -49,7 +50,7 @@ REPRODUCAO               EQU COMANDOS + 5AH     ; Reproduz o audio
 ;*********************************************************************************
 ;Zona de dados
 ;*********************************************************************************
-PLACE 0100H
+PLACE 1000H
 painel_lista:
     WORD LARGURA
     WORD ALTURA
@@ -70,8 +71,7 @@ asteroide_n_mineravel:
     WORD VERMELHO, 0,0,0, VERMELHO
 
 sonda:
-    WORD CASTANHO
-
+    WORD VERDE
 ;*********************************************************************************
 ;Codigo principal
 ;*********************************************************************************
@@ -80,11 +80,18 @@ PLACE      0
 apaga_imagem:
     MOV  [APAGA_AVISO], R1	                ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
     MOV  [APAGA_ECRÃ], R1	                ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
+display:
+    MOV  R0, DISPLAYS
+    MOV  R9, 100H
+    MOV  [R0], R9
+
 
 menu_principal:
     MOV	 R1, IMAGEM1			                    ; cenário de fundo número 0
     MOV  [SELECIONA_CENARIO_FUNDO], R1	            ; seleciona o cenário de fundo
     JMP  fundo_jogo
+
+
 
 teclado_var:                                ; inicializacao dos registos referentes ao teclado
     MOV  R2, TEC_LIN                        ; endereco do periferico das linhas
@@ -134,13 +141,36 @@ ver_tecla:
     CMP R1, R8
     JZ tecla_2
     ;adicionar casos das outras teclas
+
+    MOV R8, 0014H         ; uso o regidtro 8 e tenho que redefenir sempre as merdas mas a partida esta chill
+    CMP R1, R8
+    JZ tecla_3
+
+    MOV R8, 0018H         ; uso o regidtro 8 e tenho que redefenir sempre as merdas mas a partida esta chill
+    CMP R1, R8
+    JZ tecla_4
+
     JMP teclado_var    ; jump feito para resetar o valor dos registros tipo o 8
+
+
 
 tecla_1:
     JMP apaga_asteroide 
 
 tecla_2:
-    JMP apaga_sonda
+    JMP mata_sonda
+
+tecla_3:
+    MOV  R0, DISPLAYS
+    ADD  R9, 001H
+    MOV  [R0], R9
+    JMP  teclado_var
+
+tecla_4:
+    MOV  R0, DISPLAYS
+    SUB  R9, 001H
+    MOV  [R0], R9
+    JMP  teclado_var
 ;*********************************************************************************
 ;Codigo painel
 ;*********************************************************************************
@@ -149,7 +179,7 @@ fundo_jogo:
     MOV	 R1, IMAGEM2			                    ; cenário de fundo número 1
     MOV  [SELECIONA_CENARIO_FUNDO], R1	            ; seleciona o cenário de fundo
     MOV  R11, 0                                     ; Registo reservado para o asteroide
-    MOV  R10, 0                                     ; Registo reservado para a sonda
+    MOV  R10, 25                                  ; Registo reservado para a sonda
 
 posicao_boneco:
     MOV  R1, LIN
@@ -181,9 +211,11 @@ linha_pixel_seg:
     JNZ  desenha_pixels
 
 
+
 ;*********************************************************************************
 ;Asteroide
 ;*********************************************************************************
+
 
 posicao_asteroide:
     MOV  R1, R11                          ; defenir linha
@@ -193,8 +225,8 @@ posicao_asteroide:
     MOV  R8, [R4]                       ; altura do asteroide
     ADD	 R4, 2
     MOV  R6, [R4]	                    ; coluna do asteroide
-    MOV  R9, [R4]                       ; isto serve para a comparacao que para de o desenhar tipo isso
-    ADD  R9, R1                         ; serve para a comparacao tb
+    MOV  R0, [R4]                       ; isto serve para a comparacao que para de o desenhar tipo isso
+    ADD  R0, R1                         ; serve para a comparacao tb
     ADD	 R4, 2
     
 desenha_pixels_as:       		        ; desenha os pixels do boneco a partir da tabela
@@ -211,8 +243,11 @@ linha_pixel_seg_as:
     MOV  R5, R8
     MOV  R2, R11
     ADD  R1, 1
-    CMP  R9, R1
+    CMP  R0, R1
     JNZ  desenha_pixels_as
+    MOV  R8, LINHA_SONDA
+    CMP  R10, R8
+    JZ   cria_sonda
     JMP  teclado_var
 
 ;*********************************************************************************
@@ -245,15 +280,31 @@ apaga_proxima_linha:
     ADD  R11, 1                             ; Avanca o asteroide
     JMP  posicao_asteroide
 
+
+
 ;*********************************************************************************
 ;Sonda
 ;*********************************************************************************
 
 cria_sonda:
-    MOV  R1, R10                          ; defenir linha
-    MOV  R2, COLUNA_SONDA                          ; defenir coluna
-	MOV	 R4, asteroide_n_mineravel	    ; endereço da tabela que define o boneco  
-    
+    MOV  R1, R10                             ; defenir linha
+    MOV  R2, COLUNA_SONDA                    ; defenir coluna
+    MOV  R4, sonda
+    MOV  R3, [R4]
+    MOV  [DEFINE_LINHA], R1                 ; seleciona a linha
+    MOV  [DEFINE_COLUNA], R2                ; seleciona a coluna
+    MOV  [DEFINE_PIXEL], R3                 ; altera a cor do pixel na linha e coluna selecionadas
+    JMP  teclado_var
+
+mata_sonda:
+    MOV  R1, R10                            ; defenir linha
+    MOV  R2, COLUNA_SONDA                   ; defenir coluna
+    MOV  R3, 0
+    MOV  [DEFINE_LINHA], R1                 ; seleciona a linha
+    MOV  [DEFINE_COLUNA], R2                ; seleciona a coluna
+    MOV  [DEFINE_PIXEL], R3                 ; altera a cor do pixel na linha e coluna selecionadas
+    SUB  R10, 1
+    JMP  cria_sonda 
 
 fim:
     JMP  fim 
