@@ -17,7 +17,8 @@ LIN        EQU 26
 COL        EQU 24
 IMAGEM1    EQU 0
 IMAGEM2    EQU 1
-
+ATRASO			EQU	400H		; atraso para limitar a velocidade de movimento do boneco
+COLUNA_SONDA    EQU 32
 
 ;*********************************************************************************
 ;Cores
@@ -27,6 +28,7 @@ ROXO_ESCURO     EQU 0F829H
 ROXO_CLARO      EQU 0F62AH
 PRETO           EQU 0F000H
 CINZENTO        EQU 0FBBBH
+CASTANHO        EQU 0F642H
 ;definir variaveis para cada imagem maybe fixe e tecla carregada
 
 
@@ -47,7 +49,7 @@ REPRODUCAO               EQU COMANDOS + 5AH     ; Reproduz o audio
 ;*********************************************************************************
 ;Zona de dados
 ;*********************************************************************************
-PLACE 0100H
+PLACE 1000H
 painel_lista:
     WORD LARGURA
     WORD ALTURA
@@ -67,6 +69,8 @@ asteroide_n_mineravel:
     WORD VERMELHO, 0, VERMELHO, 0, VERMELHO
     WORD VERMELHO, 0,0,0, VERMELHO
 
+sonda:
+    WORD CASTANHO
 
 ;*********************************************************************************
 ;Codigo principal
@@ -80,7 +84,11 @@ apaga_imagem:
 menu_principal:
     MOV	 R1, IMAGEM1			                    ; cenário de fundo número 0
     MOV  [SELECIONA_CENARIO_FUNDO], R1	            ; seleciona o cenário de fundo
-    JMP  fundo_jogo
+
+display:
+    MOV  R0, DISPLAYS
+    MOV R9, 100H
+    MOV [R0], R1
 
 teclado_var:                                ; inicializacao dos registos referentes ao teclado
     MOV  R2, TEC_LIN                        ; endereco do periferico das linhas
@@ -122,16 +130,43 @@ ha_tecla:
     JMP  teclado_var   ; repete ciclo
 
 ver_tecla:
-    MOV R8, 11         ; uso o regidtro 8 e tenho que redefenir sempre as merdas mas a partida esta chill
+    MOV R8, 0011H         ; uso o regidtro 8 e tenho que redefenir sempre as merdas mas a partida esta chill
     CMP R1, R8
     JZ tecla_1
+
+    ;MOV R8, 0012H         ; uso o regidtro 8 e tenho que redefenir sempre as merdas mas a partida esta chill
+    ;CMP R1, R8
+    ;JZ tecla_2
     ;adicionar casos das outras teclas
+
+    MOV R8, 0014H         ; uso o regidtro 8 e tenho que redefenir sempre as merdas mas a partida esta chill
+    CMP R1, R8
+    JZ tecla_3
+
+    MOV R8, 0018H         ; uso o regidtro 8 e tenho que redefenir sempre as merdas mas a partida esta chill
+    CMP R1, R8
+    JZ tecla_4
+
     JMP teclado_var    ; jump feito para resetar o valor dos registros tipo o 8
 
 tecla_1:
-    MOVB [R4], R1 
-    JMP ha_tecla 
+    JMP apaga_asteroide 
 
+;tecla_2:
+    ;JMP apaga_sonda
+
+tecla_3:
+    MOV  R0, DISPLAYS
+    ADD  R9, 1H
+    MOV  [R0], R9
+    JMP  ver_tecla
+
+tecla_4:
+    MOV  R0, DISPLAYS
+    SUB  R9, 1H
+    MOV  [R0], R9
+    JMP  ver_tecla
+    
 ;*********************************************************************************
 ;Codigo painel
 ;*********************************************************************************
@@ -139,47 +174,56 @@ tecla_1:
 fundo_jogo:
     MOV	 R1, IMAGEM2			                    ; cenário de fundo número 1
     MOV  [SELECIONA_CENARIO_FUNDO], R1	            ; seleciona o cenário de fundo
+    MOV  R11, 0                                     ; Registo reservado para o asteroide
+    MOV  R10, 0                                     ; Registo reservado para a sonda
 
-;posicao_boneco:
-    ;MOV  R1, LIN
-    ;MOV  R2, COL 
-	;MOV	 R4, painel_lista		; endereço da tabela que define o boneco
-    ;MOV  R5, [R4]			    ; linha do boneco
-    ;MOV  R7, [R4]
-    ;ADD  R7, R2
-    ;MOV  R8, [R4]
-    ;ADD	 R4, 2
-    ;MOV  R6, [R4]	            ; coluna do boneco
-    ;ADD	 R4, 2
+posicao_boneco:
+    MOV  R1, LIN
+    MOV  R2, COL 
+	MOV	 R4, painel_lista		; endereço da tabela que define o boneco
+    MOV  R5, [R4]			    ; linha do boneco
+    MOV  R7, [R4]               ; 
+    ADD  R7, R2                 ;
+    MOV  R8, [R4]               ;   
+    ADD	 R4, 2                  ;
+    MOV  R6, [R4]	            ; coluna do boneco
+    ADD	 R4, 2                  ;
 
-;desenha_pixels:       		; desenha os pixels do boneco a partir da tabela
-	;MOV	 R3, [R4]			; obtém a cor do próximo pixel do boneco
-	;MOV  [DEFINE_LINHA], R1	; seleciona a linha
-	;MOV  [DEFINE_COLUNA], R2	; seleciona a coluna
-	;MOV  [DEFINE_PIXEL], R3	; altera a cor do pixel na linha e coluna selecionadas
-	;ADD	 R4, 2			    ; endereço da cor do próximo pixel (2 porque cada cor de pixel é uma word)
-    ;ADD  R2, 1               ; próxima coluna
-    ;SUB  R5, 1			; menos uma coluna para tratar
-    ;JNZ  desenha_pixels      ; continua até percorrer toda a largura do objeto
+desenha_pixels:       		    ; desenha os pixels do boneco a partir da tabela
+	MOV	 R3, [R4]			    ; obtém a cor do próximo pixel do boneco
+	MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
+	MOV  [DEFINE_COLUNA], R2	; seleciona a coluna
+	MOV  [DEFINE_PIXEL], R3	    ; altera a cor do pixel na linha e coluna selecionadas
+	ADD	 R4, 2			        ; endereço da cor do próximo pixel (2 porque cada cor de pixel é uma word)
+    ADD  R2, 1                  ; próxima coluna
+    SUB  R5, 1			        ; menos uma coluna para tratar
+    JNZ  desenha_pixels         ; continua até percorrer toda a largura do objeto
 
-;linha_pixel_seg:
-    ;MOV  R5, R8
-    ;MOV  R2, COL
-    ;ADD  R1, 1
-    ;CMP  R1, R7
-    ;JNZ  desenha_pixels
+linha_pixel_seg:
+    MOV  R5, R8
+    MOV  R2, COL
+    ADD  R1, 1
+    CMP  R1, R7
+    JNZ  desenha_pixels
+
+
+;*********************************************************************************
+;Asteroide
+;*********************************************************************************
 
 posicao_asteroide:
-    MOV  R1, 0
-    MOV  R2, 0 
+    MOV  R1, R11                          ; defenir linha
+    MOV  R2, R11                          ; defenir coluna
 	MOV	 R4, asteroide_n_mineravel	    ; endereço da tabela que define o boneco
-    MOV  R5, [R4]			            ; linha do boneco
-    MOV  R8, [R4]
+    MOV  R5, [R4]			            ; comprimento do asteroide
+    MOV  R8, [R4]                       ; altura do asteroide
     ADD	 R4, 2
-    MOV  R6, [R4]	                    ; coluna do boneco
+    MOV  R6, [R4]	                    ; coluna do asteroide
+    MOV  R9, [R4]                       ; isto serve para a comparacao que para de o desenhar tipo isso
+    ADD  R9, R1                         ; serve para a comparacao tb
     ADD	 R4, 2
     
-desenha_pixels_as:       		            ; desenha os pixels do boneco a partir da tabela
+desenha_pixels_as:       		        ; desenha os pixels do boneco a partir da tabela
 	MOV	 R3, [R4]			            ; obtém a cor do próximo pixel do boneco
 	MOV  [DEFINE_LINHA], R1	            ; seleciona a linha
 	MOV  [DEFINE_COLUNA], R2	        ; seleciona a coluna
@@ -187,40 +231,45 @@ desenha_pixels_as:       		            ; desenha os pixels do boneco a partir da
 	ADD	 R4, 2			                ; endereço da cor do próximo pixel (2 porque cada cor de pixel é uma word)
     ADD  R2, 1                          ; próxima coluna
     SUB  R5, 1			                ; menos uma coluna para tratar
-    JNZ  desenha_pixels_as                 ; continua até percorrer toda a largura do objeto
+    JNZ  desenha_pixels_as              ; continua até percorrer toda a largura do objeto
     
 linha_pixel_seg_as:
     MOV  R5, R8
-    MOV  R2, 0
+    MOV  R2, R11
     ADD  R1, 1
-    JMP desenha_pixels_as
+    CMP  R9, R1
+    JNZ  desenha_pixels_as
+    JMP  teclado_var
 
 ;*********************************************************************************
-;Codigo movimento asteroide
+;Apagar asteroide
 ;*********************************************************************************
 
-apaga_asteroide:       		            ; desenha o boneco a partir da tabela
-	MOV	R6, R2			                ; cópia da coluna do boneco
-	MOV	R4, asteroide_n_mineravel		; endereço da tabela que define o boneco
-	MOV	R5, [R4]			            ; obtém a largura do boneco
+apaga_asteroide:                            ; desenha o boneco a partir da tabela
+    MOV    R1, R11                            ; defenir linha
+    MOV    R2, R11                            ; defenir coluna
+    MOV    R4, asteroide_n_mineravel        ; endereço da tabela que define o boneco
+    MOV    R5, [R4]                         ; obtém a largura do boneco
+    MOV    R8, [R4]
+    ADD    R8, R1
 
-apaga_pixels:       		            ; desenha os pixels do boneco a partir da tabela
-	MOV	R3, 0			                ; para apagar, a cor do pixel é sempre 0
-	MOV  [DEFINE_LINHA], R1	            ; seleciona a linha
-	MOV  [DEFINE_COLUNA], R6	        ; seleciona a coluna
-	MOV  [DEFINE_PIXEL], R3	            ; altera a cor do pixel na linha e coluna selecionadas
-     ADD  R6, 1                         ; próxima coluna
-     SUB  R5, 1			                ; menos uma coluna para tratar
-     JNZ  apaga_pixels		            ; continua até percorrer toda a largura do objeto
+apaga_pixels:                               ; desenha os pixels do boneco a partir da tabela
+    MOV  R3, 0                              ; para apagar, a cor do pixel é sempre 0
+    MOV  [DEFINE_LINHA], R1                 ; seleciona a linha
+    MOV  [DEFINE_COLUNA], R2                ; seleciona a coluna
+    MOV  [DEFINE_PIXEL], R3                 ; altera a cor do pixel na linha e coluna selecionadas
+    ADD  R2, 1                              ; próxima coluna
+    SUB  R5, 1                              ; menos uma coluna para tratar
+    JNZ  apaga_pixels                       ; continua até percorrer toda a largura do objeto
 
 apaga_proxima_linha:
     MOV  R5, R8
-    MOV  R2, COL
+    MOV  R2, R11
     ADD  R1, 1
-    CMP  R1, R7
+    CMP  R1, R5
     JNZ  apaga_pixels
+    ADD  R11, 1                             ; Avanca o asteroide
+    JMP  posicao_asteroide
 
-começa_nova_linha_seguinte:
-	ADD	R1, 1			    ; para desenhar objeto na coluna seguinte (direita ou esquerda)
-    ADD R2, 1
-	JMP	desenha_pixels_as		; vai desenhar o boneco de novo
+fim:
+    JMP  fim 
