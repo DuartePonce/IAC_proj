@@ -20,6 +20,7 @@ IMAGEM2    EQU 1
 ATRASO			EQU	400H		; atraso para limitar a velocidade de movimento do boneco
 COLUNA_SONDA    EQU 32
 LINHA_SONDA   EQU 25
+DELLAY          EQU 600H
 
 ;*********************************************************************************
 ;Cores
@@ -100,9 +101,17 @@ teclado_var:                                ; inicializacao dos registos referen
     MOV  R5, MASCARA                        ; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
     MOV  R7, 2                              ; multiplicador
     MOV  R8, 8                              ; constante de comparacao
+    MOV  R1, R6   
+    MOVB [R2], R1      ; escrever no periferico de saida (linhas)
+    MOVB R0, [R3]      ; ler do periferico de entrada (colunas)
+    AND  R0, R5        ; elimina bits para alem dos bits 0-3
+    CMP  R0, 0         ; ha tecla premida?
+    JNZ teclado_var
+
 
 reset_linha:
     MOV R6, LINHA
+
 espera_tecla: 
 
     MOV  R1, R6   
@@ -114,23 +123,14 @@ espera_tecla:
 
     SHL  R1, 4         ; coloca linha no nibble high 
     OR   R1, R0        ; junta coluna (nibble low)
+
     JMP ver_tecla            
 
 linha_seguinte:
     CMP R6, R8
     JZ reset_linha
     MUL  R6, R7
-    JMP   espera_tecla 
-                    
-ha_tecla:              
-    MOV  R1, LINHA     ; testar a linha base ( 1 )
-    MOVB [R2], R1      ; escrever no periferico de saida (linhas)
-    MOVB R0, [R3]      ; ler do periferico de entrada (colunas)
-    AND  R0, R5        ; elimina bits para al�m dos bits 0-3
-    CMP  R0, 0         ; h� tecla premida?
-    JNZ  ha_tecla      ; se ainda houver uma tecla premida, espera at� n�o haver
-    
-    JMP  teclado_var   ; repete ciclo
+    JMP   espera_tecla
 
 ver_tecla:
     MOV R8, 0011H         ; uso o regidtro 8 e tenho que redefenir sempre as merdas mas a partida esta chill
@@ -151,7 +151,6 @@ ver_tecla:
     JZ tecla_4
 
     JMP teclado_var    ; jump feito para resetar o valor dos registros tipo o 8
-
 
 
 tecla_1:
@@ -248,6 +247,7 @@ linha_pixel_seg_as:
     MOV  R8, LINHA_SONDA
     CMP  R10, R8
     JZ   cria_sonda
+    MOV  R0, DELLAY
     JMP  teclado_var
 
 ;*********************************************************************************
@@ -294,6 +294,7 @@ cria_sonda:
     MOV  [DEFINE_LINHA], R1                 ; seleciona a linha
     MOV  [DEFINE_COLUNA], R2                ; seleciona a coluna
     MOV  [DEFINE_PIXEL], R3                 ; altera a cor do pixel na linha e coluna selecionadas
+    MOV  R0, DELLAY
     JMP  teclado_var
 
 mata_sonda:
