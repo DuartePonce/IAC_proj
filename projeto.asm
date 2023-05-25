@@ -19,8 +19,9 @@ IMAGEM1    EQU 0
 IMAGEM2    EQU 1
 ATRASO			EQU	400H		; atraso para limitar a velocidade de movimento do boneco
 COLUNA_SONDA    EQU 32
-LINHA_SONDA   EQU 25
+LINHA_SONDA     EQU 25
 DELLAY          EQU 600H
+SOM1            EQU 0
 
 ;*********************************************************************************
 ;Cores
@@ -90,7 +91,7 @@ display:
 menu_principal:
     MOV	 R1, IMAGEM1			                    ; cenário de fundo número 0
     MOV  [SELECIONA_CENARIO_FUNDO], R1	            ; seleciona o cenário de fundo
-    JMP  fundo_jogo
+    
 
 
 
@@ -150,6 +151,10 @@ ver_tecla:
     CMP R1, R8
     JZ tecla_4
 
+    MOV R8, 0081H         ; uso o regidtro 8 e tenho que redefenir sempre as merdas mas a partida esta chill
+    CMP R1, R8
+    JZ tecla_5
+
     JMP teclado_var    ; jump feito para resetar o valor dos registros tipo o 8
 
 
@@ -170,6 +175,10 @@ tecla_4:
     SUB  R9, 001H
     MOV  [R0], R9
     JMP  teclado_var
+
+tecla_5:
+    JMP  fundo_jogo
+
 ;*********************************************************************************
 ;Codigo painel
 ;*********************************************************************************
@@ -250,6 +259,10 @@ linha_pixel_seg_as:
     MOV  R0, DELLAY
     JMP  teclado_var
 
+reset_asteroide:
+    MOV R11, 0
+    JMP posicao_asteroide
+
 ;*********************************************************************************
 ;Apagar asteroide
 ;*********************************************************************************
@@ -272,12 +285,18 @@ apaga_pixels:                               ; desenha os pixels do boneco a part
     JNZ  apaga_pixels                       ; continua até percorrer toda a largura do objeto
 
 apaga_proxima_linha:
-    MOV  R5, R8
+    MOV  R5, 5
     MOV  R2, R11
     ADD  R1, 1
-    CMP  R1, R5
+    CMP  R1, R8
     JNZ  apaga_pixels
     ADD  R11, 1                             ; Avanca o asteroide
+    MOV R8, 31
+    CMP R11, R8
+    JZ  reset_asteroide
+    
+    MOV R8, SOM1
+    MOV [REPRODUCAO], R8
     JMP  posicao_asteroide
 
 
