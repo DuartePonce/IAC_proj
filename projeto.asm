@@ -135,7 +135,6 @@ ver_tecla:
     MOV R8, 0012H         ; R8 caso da tecla 1
     CMP R1, R8
     JZ tecla_2
-    ;adicionar casos das outras teclas
 
     MOV R8, 0014H         ; R8 caso da tecla 2
     CMP R1, R8
