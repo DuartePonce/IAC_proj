@@ -739,7 +739,11 @@
     "moduleDelay" : 5,
     "positionX" : 258,
     "positionY" : 40,
-    "simGuiVisibleInSimulation" : false,
+    "simGuiVisibleInSimulation" : true,
+    "simGuiXRelative" : 0,
+    "simGuiYRelative" : 0,
+    "simGuiWidth" : 798,
+    "simGuiHeight" : 886,
     "clockPeriod" : 200,
     "startAutomatically" : true,
     "simulationMaster" : true,
@@ -768,7 +772,7 @@
       "pinConnectionID" : -1,
       "pinValueFixed" : "1"
     },
-    "programFilePathName" : "../projeto.asm",
+    "programFilePathName" : "projeto.asm",
     "nTabSpaces" : 4,
     "bus interface" : {
       "className" : "ModuleExtensionMasterBusReadWrite",
@@ -1534,7 +1538,7 @@
     "sounds/videos settings" : [ {
       "filePathName" : "nave-disparo.wav",
       "relative sound volume" : 1.0,
-      "relative start time" : 0.0,
+      "relative start time" : 0.15,
       "relative stop time" : 1.0,
       "playAsClip" : false
     } ],

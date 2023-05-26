@@ -87,7 +87,12 @@ display:
 menu_principal:
     MOV	 R1, IMAGEM1			                    ; cenário de fundo número 0
     MOV  [SELECIONA_CENARIO_FUNDO], R1	            ; seleciona o cenário de fundo
-    MOV R6, LINHA
+    MOV R6, LINHA                                   ; instrucao necessaria ao comeco do codigo seguinte
+
+;*********************************************************************************
+; Teclado - o codigo que se segue tem como objetivo ler os inputs do teclado
+;           e avaliar o seu conteudo
+;*********************************************************************************
 
 teclado_var:           ; inicializacao dos registos referentes ao teclado
     MOV  R2, TEC_LIN   ; endereco do periferico das linhas
@@ -148,7 +153,7 @@ ver_tecla:
     CMP R1, R8
     JZ tecla_5
 
-    JMP teclado_var    ; jump feito para resetar o valor dos registros tipo o 8
+    JMP teclado_var    ; jump feito para resetar o valor dos registros caso nenhuma das teclas antecipadas seja premida
 
 
 tecla_1:
@@ -173,7 +178,8 @@ tecla_5:
     JMP  fundo_jogo
 
 ;*********************************************************************************
-;Codigo painel
+;Codigo painel - codigo que desenha e da setup ao painel de jogo mudando a imagem 
+;                de fundo e desenhando o painel
 ;*********************************************************************************
 
 fundo_jogo:
@@ -182,20 +188,20 @@ fundo_jogo:
     MOV  R11, 0                                     ; Registo reservado para o asteroide
     MOV  R10, 25                                    ; Registo reservado para a sonda
 
-posicao_boneco:
+posicao_painel:
     MOV  R1, LIN
     MOV  R2, COL 
-	MOV	 R4, painel_lista		; endereço da tabela que define o boneco
+	MOV	 R4, painel_lista		; endereço da tabela que define o painel
     MOV  R5, [R4]			    ; linha do painel
     MOV  R7, [R4]               ; guarda a linha do painel
     ADD  R7, R2                 ; soma a coluna inicial ao tamanho da linha para saber as dimensoes maximas
     MOV  R8, [R4]               ; guarda a linha do painel
     ADD	 R4, 2                  
-    MOV  R6, [R4]	            ; coluna do boneco
+    MOV  R6, [R4]	            ; coluna do painel
     ADD	 R4, 2                  
 
-desenha_pixels:       		    ; desenha os pixels do boneco a partir da tabela
-	MOV	 R3, [R4]			    ; obtém a cor do próximo pixel do boneco
+desenha_pixels:       		    ; desenha os pixels do painel a partir da tabela
+	MOV	 R3, [R4]			    ; obtém a cor do próximo pixel do painel
 	MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
 	MOV  [DEFINE_COLUNA], R2	; seleciona a coluna
 	MOV  [DEFINE_PIXEL], R3	    ; altera a cor do pixel na linha e coluna selecionadas
@@ -214,14 +220,14 @@ linha_pixel_seg:
 
 
 ;*********************************************************************************
-;Asteroide
+;Asteroide - codigo que desenha o asteroide(Tie fighter) pixel a pixel
 ;*********************************************************************************
 
 
 posicao_asteroide:
     MOV  R1, R11                        ; defenir linha
     MOV  R2, R11                        ; defenir coluna
-	MOV	 R4, asteroide_n_mineravel	    ; endereço da tabela que define o boneco
+	MOV	 R4, asteroide_n_mineravel	    ; endereço da tabela que define o asteroide
     MOV  R5, [R4]			            ; comprimento do asteroide
     MOV  R8, [R4]                       ; altura do asteroide
     ADD	 R4, 2
@@ -230,8 +236,8 @@ posicao_asteroide:
     ADD  R0, R1                         ; serve para a comparacao tb
     ADD	 R4, 2
     
-desenha_pixels_as:       		        ; desenha os pixels do boneco a partir da tabela
-	MOV	 R3, [R4]			            ; obtém a cor do próximo pixel do boneco
+desenha_pixels_as:       		        ; desenha os pixels do asteroide a partir da tabela
+	MOV	 R3, [R4]			            ; obtém a cor do próximo pixel do asteroide
 	MOV  [DEFINE_LINHA], R1	            ; seleciona a linha
 	MOV  [DEFINE_COLUNA], R2	        ; seleciona a coluna
 	MOV  [DEFINE_PIXEL], R3	            ; altera a cor do pixel na linha e coluna selecionadas
@@ -242,7 +248,7 @@ desenha_pixels_as:       		        ; desenha os pixels do boneco a partir da tab
     
 linha_pixel_seg_as:             ; segue a mesma logica do painel 
     MOV  R5, R8                 
-    MOV  R2, R11    
+    MOV  R2, R11                ; reseta o valor do R2 com o valor da coluna onde comeca a desenhar
     ADD  R1, 1                  ; incrmenta um ao r1 para avancar a linha
     CMP  R0, R1
     JNZ  desenha_pixels_as
@@ -253,21 +259,21 @@ linha_pixel_seg_as:             ; segue a mesma logica do painel
 
 reset_asteroide:                ; reseta o asteroide quando ele chega a ultima linha do campo de jogo
     MOV R11, 0
-    JMP posicao_asteroide
+    JMP posicao_painel
 
 ;*********************************************************************************
-;Apagar asteroide
+;Apagar asteroide - codigo que apaga o desenho do asteroide 
 ;*********************************************************************************
 
-apaga_asteroide:                            ; desenha o boneco a partir da tabela
+apaga_asteroide:                            ; desenha o asteroide a partir da tabela
     MOV    R1, R11                          ; defenir linha
     MOV    R2, R11                          ; defenir coluna
-    MOV    R4, asteroide_n_mineravel        ; endereço da tabela que define o boneco
-    MOV    R5, [R4]                         ; obtém a largura do boneco
+    MOV    R4, asteroide_n_mineravel        ; endereço da tabela que define o asteroide
+    MOV    R5, [R4]                         ; obtém a largura do asteroide
     MOV    R8, [R4]
     ADD    R8, R1
 
-apaga_pixels:                               ; desenha os pixels do boneco a partir da tabela
+apaga_pixels:                               ; desenha os pixels do asteroide a partir da tabela
     MOV  R3, 0                              ; para apagar, a cor do pixel é sempre 0
     MOV  [DEFINE_LINHA], R1                 ; seleciona a linha
     MOV  [DEFINE_COLUNA], R2                ; seleciona a coluna
@@ -280,9 +286,9 @@ apaga_proxima_linha:
     MOV  R5, 5                  ; R5 tem o valor do tamanho do asteroide
     MOV  R2, R11                ; avanca para a coluna inicial
     ADD  R1, 1
-    CMP  R1, R8
+    CMP  R1, R8                 ; comparacao para verificar se ainda ha linhas a apagar
     JNZ  apaga_pixels            
-    ADD  R11, 1                 ; Avanca o asteroide
+    ADD  R11, 1                 ; Avanca a posicao asteroide
     MOV R8, 31
     CMP R11, R8
     JZ  reset_asteroide         ; caso o asteroide esteja na ultima linha do painel vai reseta lo
@@ -294,7 +300,7 @@ apaga_proxima_linha:
 
 
 ;*********************************************************************************
-;Sonda
+;Sonda - codigo que desenha e apaga a sonda
 ;*********************************************************************************
 
 cria_sonda:
