@@ -2,25 +2,23 @@
 ;Constantes principais a declarar:
 ;*********************************************************************************
 
-DISPLAYS   EQU 0A000H  ; POUT-1
-TEC_LIN    EQU 0C000H  ; POUT-2
-TEC_COL    EQU 0E000H  ; PIN
-LINHA      EQU 1       ; Variável de linha 
-MASCARA    EQU 0FH     ; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
-N_LINHAS   EQU  32	   ; número de linhas do ecrã (altura)
-N_COLUNAS  EQU  64	   ; número de colunas do ecrã (largura)
-LARGURA    EQU 16
-ALTURA     EQU 6
-LARGURA_ASTEROIDE    EQU 5
-ALTURA_ASTEROIDE     EQU 5
-LIN        EQU 26
-COL        EQU 24
-IMAGEM1    EQU 0
+DISPLAYS   EQU 0A000H       ; POUT-1
+TEC_LIN    EQU 0C000H       ; POUT-2
+TEC_COL    EQU 0E000H       ; PIN
+LINHA      EQU 1            ; Variável de linha 
+MASCARA    EQU 0FH          ; Para isolar os 4 bits de menor peso, ao ler as colunas do teclado
+N_LINHAS   EQU  32	        ; número de linhas do ecrã (altura)
+N_COLUNAS  EQU  64	        ; número de colunas do ecrã (largura)
+LARGURA    EQU 16           ; Largura do painel
+ALTURA     EQU 6            ; Altura do painel
+LARGURA_ASTEROIDE    EQU 5  ; Largura do asteroide
+ALTURA_ASTEROIDE     EQU 5  ; Altura do asteroide
+LIN        EQU 26           ; Linha inicial de desenho do painel
+COL        EQU 24           ; Coluna inicial do desenho do painel
+IMAGEM1    EQU 0            
 IMAGEM2    EQU 1
-ATRASO			EQU	400H		; atraso para limitar a velocidade de movimento do boneco
-COLUNA_SONDA    EQU 32
-LINHA_SONDA     EQU 25
-DELLAY          EQU 600H
+COLUNA_SONDA    EQU 32      ; Posicao inical da sona
+LINHA_SONDA     EQU 25      ; Posicao inicial da sonda
 SOM1            EQU 0
 
 ;*********************************************************************************
@@ -32,8 +30,6 @@ ROXO_CLARO      EQU 0F62AH
 PRETO           EQU 0F000H
 CINZENTO        EQU 0FBBBH
 VERDE           EQU 0F6F6H
-;definir variaveis para cada imagem maybe fixe e tecla carregada
-
 
 ;*********************************************************************************
 ;Comandos a declarar 
@@ -80,28 +76,26 @@ sonda:
 PLACE      0
 
 apaga_imagem:
-    MOV  [APAGA_AVISO], R1	                ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
-    MOV  [APAGA_ECRÃ], R1	                ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
+    MOV  [APAGA_AVISO], R1          ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+    MOV  [APAGA_ECRÃ], R1	        ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
 display:
-    MOV  R0, DISPLAYS
-    MOV  R9, 100H
+    MOV  R0, DISPLAYS               ; Funcao que da setup ao display
+    MOV  R9, 100H                       
     MOV  [R0], R9
 
 
 menu_principal:
     MOV	 R1, IMAGEM1			                    ; cenário de fundo número 0
     MOV  [SELECIONA_CENARIO_FUNDO], R1	            ; seleciona o cenário de fundo
-    
+    MOV R6, LINHA
 
-
-
-teclado_var:                                ; inicializacao dos registos referentes ao teclado
-    MOV  R2, TEC_LIN                        ; endereco do periferico das linhas
-    MOV  R3, TEC_COL                        ; endereco do periferico das colunas
-    MOV  R4, DISPLAYS                       ; endereco do periferico dos displays
-    MOV  R5, MASCARA                        ; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
-    MOV  R7, 2                              ; multiplicador
-    MOV  R8, 8                              ; constante de comparacao
+teclado_var:           ; inicializacao dos registos referentes ao teclado
+    MOV  R2, TEC_LIN   ; endereco do periferico das linhas
+    MOV  R3, TEC_COL   ; endereco do periferico das colunas
+    MOV  R4, DISPLAYS  ; endereco do periferico dos displays
+    MOV  R5, MASCARA   ; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
+    MOV  R7, 2         ; multiplicador
+    MOV  R8, 8         ; constante de comparacao
     MOV  R1, R6   
     MOVB [R2], R1      ; escrever no periferico de saida (linhas)
     MOVB R0, [R3]      ; ler do periferico de entrada (colunas)
@@ -128,30 +122,30 @@ espera_tecla:
     JMP ver_tecla            
 
 linha_seguinte:
-    CMP R6, R8
+    CMP R6, R8          ; caso r8 seja igual ao r6 sera necessario resetar a linha
     JZ reset_linha
-    MUL  R6, R7
+    MUL  R6, R7         ; avancar a linha
     JMP   espera_tecla
 
 ver_tecla:
-    MOV R8, 0011H         ; uso o regidtro 8 e tenho que redefenir sempre as merdas mas a partida esta chill
+    MOV R8, 0011H         ; R8 caso da tecla 0
     CMP R1, R8
     JZ tecla_1
 
-    MOV R8, 0012H         ; uso o regidtro 8 e tenho que redefenir sempre as merdas mas a partida esta chill
+    MOV R8, 0012H         ; R8 caso da tecla 1
     CMP R1, R8
     JZ tecla_2
     ;adicionar casos das outras teclas
 
-    MOV R8, 0014H         ; uso o regidtro 8 e tenho que redefenir sempre as merdas mas a partida esta chill
+    MOV R8, 0014H         ; R8 caso da tecla 2
     CMP R1, R8
     JZ tecla_3
 
-    MOV R8, 0018H         ; uso o regidtro 8 e tenho que redefenir sempre as merdas mas a partida esta chill
+    MOV R8, 0018H         ; R8 caso da tecla 3
     CMP R1, R8
     JZ tecla_4
 
-    MOV R8, 0081H         ; uso o regidtro 8 e tenho que redefenir sempre as merdas mas a partida esta chill
+    MOV R8, 0081H         ; R8 caso da tecla C
     CMP R1, R8
     JZ tecla_5
 
@@ -164,13 +158,13 @@ tecla_1:
 tecla_2:
     JMP mata_sonda
 
-tecla_3:
+tecla_3:                    ; Tecla de incrementacao ao display
     MOV  R0, DISPLAYS
     ADD  R9, 001H
     MOV  [R0], R9
     JMP  teclado_var
 
-tecla_4:
+tecla_4:                    ; Tecla que decrementa ao display
     MOV  R0, DISPLAYS
     SUB  R9, 001H
     MOV  [R0], R9
@@ -187,19 +181,19 @@ fundo_jogo:
     MOV	 R1, IMAGEM2			                    ; cenário de fundo número 1
     MOV  [SELECIONA_CENARIO_FUNDO], R1	            ; seleciona o cenário de fundo
     MOV  R11, 0                                     ; Registo reservado para o asteroide
-    MOV  R10, 25                                  ; Registo reservado para a sonda
+    MOV  R10, 25                                    ; Registo reservado para a sonda
 
 posicao_boneco:
     MOV  R1, LIN
     MOV  R2, COL 
 	MOV	 R4, painel_lista		; endereço da tabela que define o boneco
-    MOV  R5, [R4]			    ; linha do boneco
-    MOV  R7, [R4]               ; 
-    ADD  R7, R2                 ;
-    MOV  R8, [R4]               ;   
-    ADD	 R4, 2                  ;
+    MOV  R5, [R4]			    ; linha do painel
+    MOV  R7, [R4]               ; guarda a linha do painel
+    ADD  R7, R2                 ; soma a coluna inicial ao tamanho da linha para saber as dimensoes maximas
+    MOV  R8, [R4]               ; guarda a linha do painel
+    ADD	 R4, 2                  
     MOV  R6, [R4]	            ; coluna do boneco
-    ADD	 R4, 2                  ;
+    ADD	 R4, 2                  
 
 desenha_pixels:       		    ; desenha os pixels do boneco a partir da tabela
 	MOV	 R3, [R4]			    ; obtém a cor do próximo pixel do boneco
@@ -212,10 +206,10 @@ desenha_pixels:       		    ; desenha os pixels do boneco a partir da tabela
     JNZ  desenha_pixels         ; continua até percorrer toda a largura do objeto
 
 linha_pixel_seg:
-    MOV  R5, R8
-    MOV  R2, COL
-    ADD  R1, 1
-    CMP  R1, R7
+    MOV  R5, R8             ; reseta o valor de r5 com r8
+    MOV  R2, COL            ; reseta o valor da coluna para r2
+    ADD  R1, 1              ; adiciona um ao r1 para avaancar a linha
+    CMP  R1, R7             ; e compara o r1 com o r7 para verificar se ja chegamos a ultima linha 
     JNZ  desenha_pixels
 
 
@@ -226,8 +220,8 @@ linha_pixel_seg:
 
 
 posicao_asteroide:
-    MOV  R1, R11                          ; defenir linha
-    MOV  R2, R11                          ; defenir coluna
+    MOV  R1, R11                        ; defenir linha
+    MOV  R2, R11                        ; defenir coluna
 	MOV	 R4, asteroide_n_mineravel	    ; endereço da tabela que define o boneco
     MOV  R5, [R4]			            ; comprimento do asteroide
     MOV  R8, [R4]                       ; altura do asteroide
@@ -247,19 +241,18 @@ desenha_pixels_as:       		        ; desenha os pixels do boneco a partir da tab
     SUB  R5, 1			                ; menos uma coluna para tratar
     JNZ  desenha_pixels_as              ; continua até percorrer toda a largura do objeto
     
-linha_pixel_seg_as:
-    MOV  R5, R8
-    MOV  R2, R11
-    ADD  R1, 1
+linha_pixel_seg_as:             ; segue a mesma logica do painel 
+    MOV  R5, R8                 
+    MOV  R2, R11    
+    ADD  R1, 1                  ; incrmenta um ao r1 para avancar a linha
     CMP  R0, R1
     JNZ  desenha_pixels_as
     MOV  R8, LINHA_SONDA
-    CMP  R10, R8
+    CMP  R10, R8                ; avanca para a sonda quando ela nao existe
     JZ   cria_sonda
-    MOV  R0, DELLAY
     JMP  teclado_var
 
-reset_asteroide:
+reset_asteroide:                ; reseta o asteroide quando ele chega a ultima linha do campo de jogo
     MOV R11, 0
     JMP posicao_asteroide
 
@@ -268,8 +261,8 @@ reset_asteroide:
 ;*********************************************************************************
 
 apaga_asteroide:                            ; desenha o boneco a partir da tabela
-    MOV    R1, R11                            ; defenir linha
-    MOV    R2, R11                            ; defenir coluna
+    MOV    R1, R11                          ; defenir linha
+    MOV    R2, R11                          ; defenir coluna
     MOV    R4, asteroide_n_mineravel        ; endereço da tabela que define o boneco
     MOV    R5, [R4]                         ; obtém a largura do boneco
     MOV    R8, [R4]
@@ -285,17 +278,17 @@ apaga_pixels:                               ; desenha os pixels do boneco a part
     JNZ  apaga_pixels                       ; continua até percorrer toda a largura do objeto
 
 apaga_proxima_linha:
-    MOV  R5, 5
-    MOV  R2, R11
+    MOV  R5, 5                  ; R5 tem o valor do tamanho do asteroide
+    MOV  R2, R11                ; avanca para a coluna inicial
     ADD  R1, 1
     CMP  R1, R8
-    JNZ  apaga_pixels
-    ADD  R11, 1                             ; Avanca o asteroide
+    JNZ  apaga_pixels            
+    ADD  R11, 1                 ; Avanca o asteroide
     MOV R8, 31
     CMP R11, R8
-    JZ  reset_asteroide
+    JZ  reset_asteroide         ; caso o asteroide esteja na ultima linha do painel vai reseta lo
     
-    MOV R8, SOM1
+    MOV R8, SOM1                ; reporducao do audio do asteroide a mover se
     MOV [REPRODUCAO], R8
     JMP  posicao_asteroide
 
@@ -313,7 +306,6 @@ cria_sonda:
     MOV  [DEFINE_LINHA], R1                 ; seleciona a linha
     MOV  [DEFINE_COLUNA], R2                ; seleciona a coluna
     MOV  [DEFINE_PIXEL], R3                 ; altera a cor do pixel na linha e coluna selecionadas
-    MOV  R0, DELLAY
     JMP  teclado_var
 
 mata_sonda:
