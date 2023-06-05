@@ -169,10 +169,9 @@ testa_C:
     JMP	atualiza_display
 tecla_0:
     CALL sonda_1
-    MOV	R1, [tecla_carregada]
-    MOV	R1, [sonda1]    
     EI1
     EI
+    MOV	R1, [sonda1]    
 
     
     JMP	atualiza_display
@@ -223,8 +222,8 @@ ha_tecla:              ; neste ciclo espera-se at� NENHUMA tecla estar premida
     CMP  R0, 0         ; h� tecla premida?
     JNZ  ha_tecla      ; se ainda houver uma tecla premida, espera at� n�o haver
 
-    MOV	[tecla_carregada], R1
-    
+
+
     JMP ciclo
 
 reset:
@@ -289,19 +288,46 @@ linha_pixel_seg:
 
 PROCESS SP_sonda1
 sonda_1:
+    CALL desenhar_sonda
+
+    MOV	[sonda1], R3
+
+    CALL apagar_sonda
+
+    JMP sonda_1
+
+desenhar_sonda:
+    PUSH R1
+    PUSH R2
+    PUSH R3
+    PUSH R4
+
     MOV R4, sondas
     MOV R1, [R4]
     MOV R2, [R4 + 2]
     MOV R3, VERDE
 
-desenhar_sonda:
 	MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
 	MOV  [DEFINE_COLUNA], R2	; seleciona a coluna
 	MOV  [DEFINE_PIXEL], R3	    ; altera a cor do pixel na linha e coluna selecionadas
-    MOV	[sonda1], R1
+
+    POP R4
+    POP R3
+    POP R2
+    POP R1 
+    RET
 apagar_sonda:
-    YIELD
+    PUSH R1
+    PUSH R2
+    PUSH R3
+    PUSH R4
+    PUSH R5
+
+    MOV R4, sondas
+    MOV R1, [R4]
+    MOV R2, [R4 + 2]
     MOV R3, 0
+
 	MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
 	MOV  [DEFINE_COLUNA], R2	; seleciona a coluna
 	MOV  [DEFINE_PIXEL], R3	    ; altera a cor do pixel na linha e coluna selecionadas
@@ -313,13 +339,27 @@ apagar_sonda:
 
     MOV R5, 13
     CMP R5, R1
-    JZ  resetar_sonda1
-    JMP sonda_1
+    CALL  resetar_sonda1
+
+    POP R5
+    POP R4
+    POP R3
+    POP R2
+    POP R1 
+    RET
+
 resetar_sonda1:
+    PUSH R4
+    PUSH R5
+    
+    MOV R4, sondas
     MOV R5, 25
     MOV [R4], R5
     MOV [R4 + 2], R5
-    JMP sonda_1
+
+    POP R5
+    POP R4
+    RET
 
 
 ;*********************************************************************************
