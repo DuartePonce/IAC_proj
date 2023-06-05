@@ -26,7 +26,7 @@ IMAGEM2    EQU 1
 COLUNA_SONDA    EQU 32      ; Posicao inical da sona
 LINHA_SONDA     EQU 25      ; Posicao inicial da sonda
 SOM1            EQU 0
-
+SONDA1_CORD    EQU 25
 ;*********************************************************************************
 ;Cores
 ;*********************************************************************************
@@ -83,10 +83,14 @@ sonda:
 
 tab:
     WORD    0   
-    WORD    0
+    WORD    interrupcao_sonda
     WORD    0   
     WORD    0
 
+sondas:
+    WORD SONDA1_CORD, SONDA1_CORD
+    WORD 0, 0
+    WORD 0, 0
 ;*********************************************************************************
 ; Stacks 
 ;*********************************************************************************
@@ -97,9 +101,15 @@ SP_inicial:
 	STACK 100H		; espaço reservado para a pilha do processo "teclado"
 SP_teclado:			; este é o endereço com que o SP deste processo deve ser inicializado
 
+    STACK 100H
+SP_sonda1:
+
 
 tecla_carregada:
 	LOCK 0
+sonda1:
+    LOCK 0
+
 ;*********************************************************************************
 ;Codigo principal
 ;*********************************************************************************
@@ -120,8 +130,8 @@ menu_principal:
     MOV	 R1, IMAGEM1			                    ; cenário de fundo número 0
     MOV  [SELECIONA_CENARIO_FUNDO], R1	            ; seleciona o cenário de fundo
 
-    CALL	teclado
-
+    CALL teclado
+    CALL sonda_1
 
 
 
@@ -151,10 +161,18 @@ testa_D:
 
 testa_C:
     CALL fundo_jogo
+
+    EI1
+    EI
+
     JMP	atualiza_display
+tecla_0:
+    MOV	R1, [sonda1]
+
 ;*********************************************************************************
 ; teclado
 ;*********************************************************************************
+
 PROCESS SP_teclado 
 
 teclado:
@@ -169,7 +187,7 @@ ciclo:
 
 espera_tecla:        ; neste ciclo espera-se at� uma tecla ser premida
 
-    YIELD
+    
 
     MOV  R1, 10H
     CMP  R1, R6   
@@ -253,3 +271,52 @@ linha_pixel_seg:
     POP R1
     POP R0
     RET
+
+
+;*********************************************************************************
+; Sonda
+;*********************************************************************************
+
+PROCESS SP_sonda1
+sonda_1:
+    MOV R4, sondas
+    MOV R1, [R4]
+    MOV R2, [R4 + 2]
+    MOV R3, VERDE
+
+desenhar_sonda:
+	MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
+	MOV  [DEFINE_COLUNA], R2	; seleciona a coluna
+	MOV  [DEFINE_PIXEL], R3	    ; altera a cor do pixel na linha e coluna selecionadas
+    MOV	[sonda1], R1
+apagar_sonda:
+    YIELD
+    MOV R3, 0
+	MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
+	MOV  [DEFINE_COLUNA], R2	; seleciona a coluna
+	MOV  [DEFINE_PIXEL], R3	    ; altera a cor do pixel na linha e coluna selecionadas
+
+    SUB R1, 1
+    SUB R2, 1
+    MOV [R4], R1
+    MOV [R4 + 2], R2
+
+    MOV R5, 13
+    CMP R5, R1
+    JZ  resetar_sonda1
+    JMP sonda_1
+resetar_sonda1:
+    MOV R5, 25
+    MOV [R4], R5
+    MOV [R4 + 2], R5
+    JMP sonda_1
+
+
+;*********************************************************************************
+; Interrupcoes
+;*********************************************************************************
+interrupcao_sonda:
+    PUSH R1
+    MOV [sonda1], R1
+    POP R1
+    RFE
