@@ -72,11 +72,11 @@ asteroide_n_mineravel:
     WORD VERMELHO, 0,0,0, VERMELHO
 
 asteroide_mineravel:
-    WORD 
-    WORD
-    WORD
-    WORD
-    WORD 
+    WORD 0
+    WORD 0
+    WORD 0
+    WORD 0
+    WORD 0
 
 sonda:
     WORD VERDE
@@ -101,6 +101,7 @@ PLACE      0
 
 apaga_imagem:
     MOV  SP, SP_inicial
+    MOV  BTE, tab
     MOV  [APAGA_AVISO], R1          ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
     MOV  [APAGA_ECRÃ], R1	        ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
 display:
@@ -140,7 +141,7 @@ inicio:
     MOV  R4, 2
     MOV  R5, MASCARA   ; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
 
-
+    MOV R11, 0
 ciclo:
     MOV  R1, 0
 
@@ -154,6 +155,8 @@ espera_tecla:          ; neste ciclo espera-se at� uma tecla ser premida
     AND  R0, R5        ; elimina bits para al�m dos bits 0-3
     MUL  R6, R4
     CMP  R0, 0         ; h� tecla premida?
+
+
     JZ   espera_tecla  ; se nenhuma tecla premida, repete
 
     SHL  R1, 4         ; coloca linha no nibble high
@@ -181,6 +184,8 @@ ver_tecla:
     JMP ciclo
 tecla_C:
     CALL  fundo_jogo
+    EI0
+    EI
     JMP ciclo
 
 fim_teclado:
@@ -260,6 +265,9 @@ asteroide:
     PUSH R6
 
 ciclo_asteroide:
+
+    MOV R1, R11
+    MOV R2, R11
     ;R1(linha) e R2 sao as coordenadas de desenho ns quais
     MOV R4, TAMANHO_ASTEROIDE
     MOV R5, TAMANHO_ASTEROIDE ;LINHA
@@ -269,17 +277,18 @@ qual_asteroide:
     ;cena pseudo aleatoria para ver qual desenhaar
     ; DEPOIS FAZER COMPARACAO PARA VER QUAL TEMPLATE USARA NO DESENHO
     MOV R0, asteroide_n_mineravel
-    JMP desenhar_asteroide
+    JMP apagar_asteroide
 
-    MOV R0, asteroide_mineravel
-    JMP desenhar_asteroide
+   ; MOV R0, asteroide_mineravel
+   ; JMP desenhar_asteroide
 
 
 
 apagar_asteroide:
+    MOV R3, 0
     MOV [DEFINE_LINHA], R1	    ; seleciona a linha
 	MOV [DEFINE_COLUNA], R2	; seleciona a coluna
-	MOV [DEFINE_PIXEL], 0	    ; altera a cor do pixel na linha e coluna selecionadas
+	MOV [DEFINE_PIXEL], R3	    ; altera a cor do pixel na linha e coluna selecionadas
     ADD R2, 1
     SUB R4, 1
     JNZ apagar_asteroide
@@ -298,19 +307,24 @@ desenhar_asteroide:
     JNZ linha_seguinte_asteroide
 
 linha_seguinte_asteroide:
+
+    MOV R2, R11
     ;resetar r2
+
     MOV R4, TAMANHO_ASTEROIDE
     SUB R5, 1
     ADD R1, 1
     ADD R6, 1
 
-    CMP R6, 5  ; ideias de comparacao
-    JNZ  apagar_asteroide
+    CMP R6, 6  ; ideias de comparacao
+    JGT  apagar_asteroide
 
     MOV R5, TAMANHO_ASTEROIDE ; para assim se desenhhar
+    JLT desenhar_asteroide
     ;comparacao para saltar para o desenhar USA O JGT
     
 fim_asteroide:
+    ADD R11, 1
     POP R6
     POP R5
     POP R4
@@ -318,4 +332,4 @@ fim_asteroide:
     POP R2
     POP R1
     POP R0
-    RET
+    RFE
