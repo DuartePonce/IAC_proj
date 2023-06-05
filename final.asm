@@ -169,8 +169,8 @@ testa_C:
     JMP	atualiza_display
 tecla_0:
     CALL sonda_1
-    
-    MOV	R1, [sonda1]
+    MOV	R1, [tecla_carregada]
+    MOV	R1, [sonda1]    
     EI1
     EI
 
@@ -195,7 +195,7 @@ ciclo:
 
 espera_tecla:        ; neste ciclo espera-se at� uma tecla ser premida
 
-    WAIT
+    YIELD
 
     MOV  R1, 10H
     CMP  R1, R6   
@@ -223,6 +223,8 @@ ha_tecla:              ; neste ciclo espera-se at� NENHUMA tecla estar premida
     CMP  R0, 0         ; h� tecla premida?
     JNZ  ha_tecla      ; se ainda houver uma tecla premida, espera at� n�o haver
 
+    MOV	[tecla_carregada], R1
+    
     JMP ciclo
 
 reset:
