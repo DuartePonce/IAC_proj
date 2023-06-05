@@ -337,9 +337,7 @@ apagar_sonda:
     MOV [R4], R1
     MOV [R4 + 2], R2
 
-    MOV R5, 13
-    CMP R5, R1
-    CALL  resetar_sonda1
+    CALL  resetar1
 
     POP R5
     POP R4
@@ -348,19 +346,17 @@ apagar_sonda:
     POP R1 
     RET
 
+resetar1:
+    MOV R5, 13
+    CMP R5, R1
+    JZ resetar_sonda1
+    RET
 resetar_sonda1:
-    PUSH R4
-    PUSH R5
-    
     MOV R4, sondas
     MOV R5, 25
     MOV [R4], R5
     MOV [R4 + 2], R5
-
-    POP R5
-    POP R4
-    RET
-
+    JMP resetar1
 
 ;*********************************************************************************
 ; Interrupcoes
