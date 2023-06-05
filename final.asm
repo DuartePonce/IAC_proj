@@ -88,7 +88,7 @@ tab:
     WORD    0
 
 ;*********************************************************************************
-
+; Stacks 
 ;*********************************************************************************
 
 	STACK 100H		
@@ -131,9 +131,15 @@ atualiza_display:
 	MOVB [R0], R2            ; mostra o valor do contador nos displays
 obtem_tecla:	
 	MOV	R1, [tecla_carregada]	; bloqueia neste LOCK até uma tecla ser carregada
-    MOV R3, 81H
-	CMP	R1, R3		; é a coluna da tecla C?
+    
+    MOV R3, 81H   
+    CMP	R1, R3		; é a coluna da tecla C?
+	JZ	testa_C
+    
+    MOV R3, 84H
+	CMP	R1, R3		; é a coluna da tecla E?
 	JNZ	testa_D
+
 	ADD  R2, 1               ; aumenta o contador
 	JMP	atualiza_display
 testa_D:	
@@ -142,6 +148,10 @@ testa_D:
 	JNZ	obtem_tecla		; se não, ignora a tecla e espera por outra
 	SUB  R2, 1               ; diminui o contador
 	JMP	atualiza_display	; processo do programa principal nunca termina
+
+testa_C:
+    CALL fundo_jogo
+    JMP	atualiza_display
 ;*********************************************************************************
 ; teclado
 ;*********************************************************************************
@@ -193,3 +203,53 @@ reset:
     MOV  R6, LINHA
     JMP espera_tecla
 
+;*********************************************************************************
+;Codigo painel - codigo que desenha e da setup ao painel de jogo mudando a imagem 
+;                de fundo e desenhando o painel
+;*********************************************************************************
+
+fundo_jogo:
+    PUSH R0
+    PUSH R1
+    PUSH R2
+    PUSH R3
+    PUSH R4
+    PUSH R5
+    PUSH R6
+
+    MOV	 R1, IMAGEM2			                    ; cenário de fundo número 1
+    MOV  [SELECIONA_CENARIO_FUNDO], R1	            ; seleciona o cenário de fundo
+
+posicao_painel:
+    MOV  R1, LIN
+    MOV  R2, COL 
+	MOV	 R4, painel_lista		; endereço da tabela que define o painel
+
+    MOV  R5, LARGURA			    ; largura do painel
+    MOV  R6, ALTURA               ; guarda a altura do painel
+
+desenha_pixels:       		    ; desenha os pixels do painel a partir da tabela
+	MOV	 R3, [R4]			    ; obtém a cor do próximo pixel do painel
+	MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
+	MOV  [DEFINE_COLUNA], R2	; seleciona a coluna
+	MOV  [DEFINE_PIXEL], R3	    ; altera a cor do pixel na linha e coluna selecionadas
+	ADD	 R4, 2			        ; endereço da cor do próximo pixel (2 porque cada cor de pixel é uma word)
+    ADD  R2, 1                  ; próxima coluna
+    SUB  R5, 1			        ; menos uma coluna para tratar
+    JNZ  desenha_pixels         ; continua até percorrer toda a largura do objeto
+
+linha_pixel_seg:
+    MOV  R5, LARGURA             ; reseta o valor de r5 com r8
+    MOV  R2, COL            ; reseta o valor da coluna para r2
+    ADD  R1, 1              ; adiciona um ao r1 para avaancar a linha
+    SUB  R6, 1             ; subtrai o numero de linhas ate chegar a zero
+    JNZ  desenha_pixels
+    
+    POP R6
+    POP R5
+    POP R4
+    POP R3
+    POP R2
+    POP R1
+    POP R0
+    RET
