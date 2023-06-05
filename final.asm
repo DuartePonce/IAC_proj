@@ -131,7 +131,6 @@ menu_principal:
     MOV  [SELECIONA_CENARIO_FUNDO], R1	            ; seleciona o cenário de fundo
 
     CALL teclado
-    CALL sonda_1
 
 
 
@@ -169,9 +168,14 @@ testa_C:
 
     JMP	atualiza_display
 tecla_0:
+    CALL sonda_1
+    
     MOV	R1, [sonda1]
     EI1
     EI
+
+    
+    JMP	atualiza_display
 
 ;*********************************************************************************
 ; teclado
@@ -191,7 +195,7 @@ ciclo:
 
 espera_tecla:        ; neste ciclo espera-se at� uma tecla ser premida
 
-    
+    WAIT
 
     MOV  R1, 10H
     CMP  R1, R6   
@@ -320,7 +324,5 @@ resetar_sonda1:
 ; Interrupcoes
 ;*********************************************************************************
 interrupcao_sonda:
-    PUSH R1
     MOV [sonda1], R1
-    POP R1
     RFE
