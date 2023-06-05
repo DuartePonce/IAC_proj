@@ -145,7 +145,11 @@ obtem_tecla:
     MOV R3, 81H   
     CMP	R1, R3		; é a coluna da tecla C?
 	JZ	testa_C
-    
+
+    MOV R3, 11H   
+    CMP	R1, R3		; é a coluna da tecla 0?
+	JZ	tecla_0
+
     MOV R3, 84H
 	CMP	R1, R3		; é a coluna da tecla E?
 	JNZ	testa_D
@@ -162,12 +166,12 @@ testa_D:
 testa_C:
     CALL fundo_jogo
 
-    EI1
-    EI
 
     JMP	atualiza_display
 tecla_0:
     MOV	R1, [sonda1]
+    EI1
+    EI
 
 ;*********************************************************************************
 ; teclado
