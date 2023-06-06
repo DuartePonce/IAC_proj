@@ -568,7 +568,8 @@ inicia_n_mineravel:
 posicao_asteroide:
     MOV R5, 5 ; comprimento e largura
     MOV R7, 0 ; linha
-    MOV R9, 25 ; limite
+    MOV R9, 31 ; limite
+    MOV R10, 5
     CMP R2, 0FFFFH
     JZ inicia_esq
 
@@ -591,6 +592,7 @@ ciclo_esq:
     MOV R1, [asteroide]
     CALL apaga_as_esq
     ADD R7, 1
+    ADD R10, 1
     MOV R1, R6
     CMP R7, R9
     JNZ ciclo_esq
@@ -600,6 +602,7 @@ ciclo_meio:
     MOV R1, [asteroide]
     CALL apaga_as_meio
     ADD R7, 1
+    ADD R10, 1
     MOV R1, R6
     CMP R7, R9
     JNZ ciclo_meio
@@ -609,6 +612,7 @@ ciclo_dir:
     MOV R1, [asteroide]
     CALL apaga_as_dir
     ADD R7, 1
+    ADD R10, 1
     MOV R1, R6
     CMP R7, R9
     JNZ ciclo_dir
@@ -626,7 +630,7 @@ linha_pixel_seg_as:
     MOV R5, 5 ;reset comprimento
     ADD R7, 1 ;proxima linha
     SUB R2, 5 ;reset coluna
-    CMP R7, R5
+    CMP R7, R10
     JNZ desenha_pixels_as
     SUB R7, 5
     RET
@@ -654,7 +658,7 @@ apaga_linha_seg:
     MOV R5, 5
     ADD R7, 1
     SUB R2, 5
-    CMP R7, R5
+    CMP R7, R10
     JNZ apaga_pixeis_as
     SUB R7, 5
     RET
