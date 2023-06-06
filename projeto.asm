@@ -39,20 +39,23 @@ DIRECAO	EQU 0
 ASTEROIDE_ESQ EQU 0
 ASTEROIDE_MEIO EQU 29
 ASTEROIDE_DIR EQU 59
-VAR     EQU 1
+
 ;*********************************************************************************
 ;Cores
 ;*********************************************************************************
-VERMELHO        EQU 0FF00H  
 ROXO_ESCURO     EQU 0F829H
 ROXO_CLARO      EQU 0F62AH
 PRETO           EQU 0F000H
 CINZENTO        EQU 0FBBBH
+
+VERMELHO        EQU 0FF00H  
 VERDE           EQU 0F6F6H
 AZUL            EQU 0F0FFH
 AMARELO         EQU 0FFF0H
-
-
+ROSA            EQU 0FF0FH
+AZUL_VERDE      EQU 0F0FAH
+AMARELO_FRACO   EQU 0FFDAH
+LARANJA         EQU 0DF80H
 ;*********************************************************************************
 ;Comandos a declarar 
 ;*********************************************************************************
@@ -76,10 +79,10 @@ painel_lista:
 
     WORD 0,0,0, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, 0,0,0
     WORD 0, ROXO_ESCURO, ROXO_ESCURO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_ESCURO, ROXO_ESCURO, 0
-    WORD 0, ROXO_ESCURO, ROXO_CLARO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, ROXO_CLARO, ROXO_ESCURO, 0
+    WORD 0, ROXO_ESCURO, ROXO_CLARO, 0, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, 0, ROXO_CLARO, ROXO_ESCURO, 0
     WORD ROXO_ESCURO, ROXO_ESCURO, ROXO_CLARO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, PRETO, CINZENTO, CINZENTO, ROXO_CLARO, ROXO_ESCURO, ROXO_ESCURO
     WORD ROXO_ESCURO, ROXO_CLARO, ROXO_CLARO, CINZENTO, PRETO, CINZENTO, PRETO, CINZENTO, CINZENTO, PRETO, PRETO, PRETO, CINZENTO, ROXO_CLARO, ROXO_CLARO, ROXO_ESCURO
-    WORD ROXO_ESCURO, ROXO_CLARO, ROXO_CLARO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, PRETO, CINZENTO, CINZENTO, ROXO_CLARO, ROXO_CLARO, ROXO_ESCURO
+    WORD ROXO_ESCURO, ROXO_CLARO, ROXO_CLARO, 0, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, PRETO, CINZENTO, 0, ROXO_CLARO, ROXO_CLARO, ROXO_ESCURO
 
 asteroide_n_mineravel:
     WORD VERMELHO, 0,0,0, VERMELHO
@@ -99,11 +102,18 @@ sonda:
     WORD VERDE
 qual_asteroide:
     WORD  1
+cores_possiveis:
+    WORD VERDE, VERMELHO, AZUL, AMARELO, ROSA, AZUL_VERDE, AMARELO_FRACO, LARANJA
+coordenadas_cor:
+    WORD  28, 27
+    WORD  31, 27
+    WORD  31, 36
+    WORD  28, 36
 tab:
     WORD    interrupcao_asteroide
     WORD    interrupcao_sonda
     WORD    interrupcao_energia   
-    WORD    0
+    WORD    interrupcao_cores
 
 sondas:
     WORD SONDA1_CORD, SONDA1_CORD
@@ -156,6 +166,9 @@ SP_energia:
     STACK 100H
 SP_asteroide:
 
+    STACK 100H
+SP_cores:
+
 	
 tecla_carregada:
 	LOCK 0
@@ -169,6 +182,9 @@ energia:
     LOCK 0
 asteroide:
     LOCK 0
+cores:
+    LOCK 0
+
 ;*********************************************************************************
 ;Codigo principal
 ;*********************************************************************************
@@ -182,6 +198,7 @@ inicio:
     EI0
     EI1
     EI2
+    EI3
     EI               
 menu_principal:
     MOV	 R1, IMAGEM1			                    ; cenário de fundo número 0
@@ -210,9 +227,12 @@ obtem_tecla:
     JMP obtem_tecla
 
 testa_C:
-    MOV R3, 1
-    MOV [ECRA], R3
+
     CALL fundo_jogo
+
+    CALL inicio_cor
+    MOV [energia], R1
+
     CALL energia_inicio
 
     
@@ -788,6 +808,65 @@ resetar_qual:
 
     MOV [R1], R3
     JMP aux
+
+
+;*********************************************************************************
+;Processo Cores
+;*********************************************************************************
+PROCESS SP_cores
+inicio_cor:
+    MOV R0, 1
+    MOV [ECRA], R0
+    MOV R0, 4
+    MOV R1, [cores]
+ciclo_cor:
+    MOV R3, 0
+    CALL gerador_cor
+    SUB R0, 1
+    CALL pinta
+    CMP R0, 0
+    JNZ ciclo_cor
+    JMP inicio_cor
+gerador_cor:
+    PUSH R1
+    PUSH R2
+    PUSH R0 
+    
+    MOV R0, 2
+    MOV R1, PIN ; move o endereço do PIN para R1
+    MOVB R2, [R1] ; move os bits 0-7 do PIN para R2
+    SHR R2, 5 ; remove os 5 bits mais à direita (para chegar a um número de 0 a 7)
+    MOV R4, cores_possiveis
+    MUL R2, R0
+    MOV R3, [R4 + R2]
+
+    POP R0 
+    POP R2
+    POP R1 
+    RET
+pinta:
+    PUSH R1
+    PUSH R2
+    PUSH R3
+    PUSH R4
+    PUSH R0
+
+    MOV R4, coordenadas_cor
+    MOV R2, 4
+    MUL R0, R2
+    MOV R1, [R4 + R0]
+    MOV [DEFINE_LINHA], R1
+    ADD R0, 2
+    MOV R2, [R4 + R0]
+    MOV [DEFINE_COLUNA], R2 
+    MOV [DEFINE_PIXEL], R3
+
+    POP R0 
+    POP R4 
+    POP R3 
+    POP R2
+    POP R1
+    RET
 ;*********************************************************************************
 ; Interrupcoes
 ;*********************************************************************************
@@ -804,4 +883,8 @@ interrupcao_sonda:
 
 interrupcao_energia:
     MOV  [energia], R1
+    RFE
+
+interrupcao_cores:
+    MOV  [cores], R1
     RFE
