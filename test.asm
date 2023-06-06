@@ -102,6 +102,8 @@ sonda_ligada:
     WORD 0
     WORD 0
     WORD 0
+descontar:
+    WORD 0
 
 energia_nave:
     WORD ENERGIA_INICIAL
@@ -190,6 +192,13 @@ testa_0:
     MOV R0, 1
     MOV [R2], R0
     CALL sonda_1
+
+    MOV R10, descontar
+    MOV [R10], R0
+
+    MOV [energia], R1
+     
+    
     JMP obtem_tecla
 
 testa_1:
@@ -458,13 +467,32 @@ energia_inicio:
     MOV R4, energia_nave
     MOV R9, [R4]
 energia_purpolsores:
-    SUB R9, 3
+    MOV R10, descontar
+    MOV R11, [R10]
+
+    CMP R11, 1
+    JZ sub_5        
+    JMP sub_3
+energia_ciclo:
     CALL converte
     MOV R1, [energia]
     JMP energia_purpolsores
-    ; (das perdas de energia ao disparar e os ganhos ao minerar asteroides bons)
+
+sub_3:
+    SUB R9, 3
+    JMP energia_ciclo
+sub_5:
+    SUB R9, 5
+
+    MOV R10, descontar
+    MOV R0, 0
+    MOV [R10], R0 
+
+    JMP energia_ciclo
+; (das perdas de energia ao disparar e os ganhos ao minerar asteroides bons)
 ; energia_disparo
 ; energia_as_mineravel
+
 converte:
     MOV R0, DISPLAYS
     MOV R1, R9
