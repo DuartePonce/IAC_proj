@@ -26,11 +26,13 @@ IMAGEM2    EQU 1
 COLUNA_SONDA    EQU 32      ; Posicao inical da sona
 LINHA_SONDA     EQU 25      ; Posicao inicial da sonda
 SOM1            EQU 0
+
 SONDA1_CORD    EQU 25
 SONDA2_LINHA    EQU 25
-SONDA2_COLUNA   EQU 32
+SONDA2_COLUNA   EQU 31
 SONDA3_LINHA    EQU 25
 SONDA3_COLUNA   EQU 39
+
 ENERGIA_INICIAL EQU 103
 PIN   EQU 0E000H ; endereço do periférico PIN (entrada)
 TIPO 	EQU 0
@@ -129,6 +131,10 @@ sonda_ligada:
     WORD 0
     WORD 0
     WORD 0
+impacto_flags:
+    WORD 0 ;Flag de impacto sonda 1
+    WORD 0 ;Flag de impacto sonda 2
+    WORD 0 ;Flag de impacto sonda 3
 descontar:
     WORD 0
 tab_asteroide:
@@ -471,8 +477,19 @@ ciclo_sonda2:
     RET
 desenhar_sonda2:
     MOV R3, VERDE
-	MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
 	MOV  [DEFINE_COLUNA], R2	; seleciona a coluna
+
+;********************* FAZ DEPOIS ROTINA
+    MOV R6, R1 
+    SUB R6, 1
+    MOV  [DEFINE_LINHA], R6	    ; seleciona a linha
+    MOV R5, [DEFINE_PIXEL]
+    CMP R5, 0
+    JNZ impacto2
+;*********************
+
+desenhar_2:
+	MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
 	MOV  [DEFINE_PIXEL], R3	    ; altera a cor do pixel na linha e coluna selecionadas
     RET
 apagar_sonda2:
@@ -485,6 +502,14 @@ apagar_sonda2:
     MOV [R4 + 4], R1
     MOV [R4 + 6], R2
     RET
+
+;*********************
+impacto2:
+    MOV R4, impacto2
+    MOV R5, 1
+    MOV [R4 + 2], R5
+    MOV [asteroide], R1
+    JMP desenhar_2
 ;*********************************************************************************
 ; SONDA 3
 ;*********************************************************************************
@@ -609,6 +634,7 @@ inicia_asteroide:
 tipo_asteroide:
     CMP R1, 0
     JZ inicia_mineravel
+
     JMP inicia_n_mineravel
 inicia_mineravel:
     MOV R1, asteroide_mineravel
@@ -645,7 +671,26 @@ inicia_meio:
     CMP R3, R11
     JZ ciclo_dir
 
+
+;********************
+;********************
+;********************
+    MOV R8, impacto_flags
+    MOV R11, [R8 + 2]
+    CMP R11, 1
+    JZ  asteroide_destruido
+
     JMP ciclo_meio
+asteroide_destruido:
+    MOV R1, explosao_sprite
+
+    MOV R11, 0
+    CMP R3, R11
+    JZ ciclo_meio
+
+;********************
+;********************
+;********************
 inicia_dir:
     MOV R2, ASTEROIDE_DIR
     JMP ciclo_dir
