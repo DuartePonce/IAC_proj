@@ -674,23 +674,18 @@ inicia_meio:
     JZ ciclo_dir
 
 
-;********************
-;********************
-;********************
-    MOV R8, impacto_flags
-    MOV R11, [R8 + 2]
-    CMP R11, 1
-    JZ  asteroide_destruido
 
     JMP ciclo_meio
+;********************
 asteroide_destruido:
     MOV R1, explosao_sprite
-
+    MOV R8, impacto_flags
     MOV R11, 0
+    MOV [R8 + 2], R11
+
     CMP R3, R11
     JZ ciclo_meio
 
-;********************
 ;********************
 ;********************
 inicia_dir:
@@ -708,6 +703,12 @@ ciclo_esq:
     RET
 ciclo_meio:
     CALL desenha_pixels_as
+
+    MOV R8, impacto_flags
+    MOV R11, [R8 + 2]
+    CMP R11, 1
+    JZ  asteroide_destruido
+
     MOV R1, [asteroide]
     CALL apaga_as_meio
     ADD R7, 1
