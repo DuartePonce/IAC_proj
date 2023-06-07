@@ -708,6 +708,7 @@ asteroide_destruido_esq:
     MOV R11, 0
     MOV [R8], R11
 
+    CALL inicia_asteroide
     CALL desenha_pixels_as
     MOV R1, [asteroide]
     MOV R1, [asteroide]
@@ -722,6 +723,7 @@ asteroide_destruido_meio:
 
     ;Asteroiod e  mineravel
 
+    CALL inicia_asteroide
     CALL desenha_pixels_as
     MOV R1, [asteroide]
     MOV R1, [asteroide]
@@ -734,6 +736,7 @@ asteroide_destruido_dir:
     MOV R11, 0
     MOV [R8 + 4], R11
     
+    CALL inicia_asteroide
     CALL desenha_pixels_as
     MOV R1, [asteroide]
     MOV R1, [asteroide]
