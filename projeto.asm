@@ -72,6 +72,7 @@ SELECIONA_CENARIO_FUNDO  EQU COMANDOS + 42H		; endereço do comando para selecio
 SOM                      EQU COMANDOS + 48H     ; Seleciona o audio
 REPRODUCAO               EQU COMANDOS + 5AH     ; Reproduz o audio  
 ECRA                     EQU COMANDOS + 04H     ; Seleciona ecras
+OBTEM_COR                EQU COMANDOS + 10H   ;Obtem cor
 
 ;*********************************************************************************
 ;Zona de dados
@@ -483,7 +484,8 @@ desenhar_sonda2:
     MOV R6, R1 
     SUB R6, 1
     MOV  [DEFINE_LINHA], R6	    ; seleciona a linha
-    MOV R5, [DEFINE_PIXEL]
+    MOV R5, [OBTEM_COR]
+
     CMP R5, 0
     JNZ impacto2
 ;*********************
@@ -505,7 +507,7 @@ apagar_sonda2:
 
 ;*********************
 impacto2:
-    MOV R4, impacto2
+    MOV R4, impacto_flags
     MOV R5, 1
     MOV [R4 + 2], R5
     MOV [asteroide], R1
