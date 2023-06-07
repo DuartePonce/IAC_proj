@@ -26,11 +26,13 @@ IMAGEM2    EQU 1
 COLUNA_SONDA    EQU 32      ; Posicao inical da sona
 LINHA_SONDA     EQU 25      ; Posicao inicial da sonda
 SOM1            EQU 0
+
 SONDA1_CORD    EQU 25
 SONDA2_LINHA    EQU 25
-SONDA2_COLUNA   EQU 32
+SONDA2_COLUNA   EQU 31
 SONDA3_LINHA    EQU 25
 SONDA3_COLUNA   EQU 39
+
 ENERGIA_INICIAL EQU 103
 PIN   EQU 0E000H ; endereço do periférico PIN (entrada)
 TIPO 	EQU 0
@@ -39,16 +41,23 @@ DIRECAO	EQU 0
 ASTEROIDE_ESQ EQU 0
 ASTEROIDE_MEIO EQU 29
 ASTEROIDE_DIR EQU 59
+
 ;*********************************************************************************
 ;Cores
 ;*********************************************************************************
-VERMELHO        EQU 0FF00H  
 ROXO_ESCURO     EQU 0F829H
 ROXO_CLARO      EQU 0F62AH
 PRETO           EQU 0F000H
 CINZENTO        EQU 0FBBBH
-VERDE           EQU 0F6F6H
 
+VERMELHO        EQU 0FF00H  
+VERDE           EQU 0F6F6H
+AZUL            EQU 0F0FFH
+AMARELO         EQU 0FFF0H
+ROSA            EQU 0FF0FH
+AZUL_VERDE      EQU 0F0FAH
+AMARELO_FRACO   EQU 0FFDAH
+LARANJA         EQU 0DF80H
 ;*********************************************************************************
 ;Comandos a declarar 
 ;*********************************************************************************
@@ -62,6 +71,8 @@ APAGA_ECRÃ	 	         EQU COMANDOS + 02H		; endereço do comando para apagar to
 SELECIONA_CENARIO_FUNDO  EQU COMANDOS + 42H		; endereço do comando para selecionar uma imagem de fundo
 SOM                      EQU COMANDOS + 48H     ; Seleciona o audio
 REPRODUCAO               EQU COMANDOS + 5AH     ; Reproduz o audio  
+ECRA                     EQU COMANDOS + 04H     ; Seleciona ecras
+OBTEM_COR                EQU COMANDOS + 10H   ;Obtem cor
 
 ;*********************************************************************************
 ;Zona de dados
@@ -71,10 +82,10 @@ painel_lista:
 
     WORD 0,0,0, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, 0,0,0
     WORD 0, ROXO_ESCURO, ROXO_ESCURO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_ESCURO, ROXO_ESCURO, 0
-    WORD 0, ROXO_ESCURO, ROXO_CLARO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, ROXO_CLARO, ROXO_ESCURO, 0
+    WORD 0, ROXO_ESCURO, ROXO_CLARO, 0, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, 0, ROXO_CLARO, ROXO_ESCURO, 0
     WORD ROXO_ESCURO, ROXO_ESCURO, ROXO_CLARO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, PRETO, CINZENTO, CINZENTO, ROXO_CLARO, ROXO_ESCURO, ROXO_ESCURO
     WORD ROXO_ESCURO, ROXO_CLARO, ROXO_CLARO, CINZENTO, PRETO, CINZENTO, PRETO, CINZENTO, CINZENTO, PRETO, PRETO, PRETO, CINZENTO, ROXO_CLARO, ROXO_CLARO, ROXO_ESCURO
-    WORD ROXO_ESCURO, ROXO_CLARO, ROXO_CLARO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, PRETO, CINZENTO, CINZENTO, ROXO_CLARO, ROXO_CLARO, ROXO_ESCURO
+    WORD ROXO_ESCURO, ROXO_CLARO, ROXO_CLARO, 0, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, PRETO, CINZENTO, 0, ROXO_CLARO, ROXO_CLARO, ROXO_ESCURO
 
 asteroide_n_mineravel:
     WORD VERMELHO, 0,0,0, VERMELHO
@@ -84,20 +95,33 @@ asteroide_n_mineravel:
     WORD VERMELHO, 0,0,0, VERMELHO
 
 asteroide_mineravel:
-    WORD 0
-    WORD 0
-    WORD 0
-    WORD 0
-    WORD 0
-
+    WORD 0, CINZENTO, CINZENTO, CINZENTO, 0
+    WORD CINZENTO, AZUL, CINZENTO, VERDE, CINZENTO
+    WORD CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO
+    WORD CINZENTO, AMARELO, CINZENTO, VERMELHO, CINZENTO
+    WORD 0, CINZENTO, CINZENTO, CINZENTO, 0
+explosao_sprite:
+    WORD VERMELHO, 0, 0, VERMELHO, 0
+    WORD 0, 0, VERMELHO, 0, VERMELHO
+    WORD 0, VERMELHO, 0, 0, 0
+    WORD 0, 0, 0, VERMELHO, 0
+    WORD VERMELHO, 0, VERMELHO, 0, VERMELHO
 sonda:
     WORD VERDE
-
+qual_asteroide:
+    WORD  1
+cores_possiveis:
+    WORD VERDE, VERMELHO, AZUL, AMARELO, ROSA, AZUL_VERDE, AMARELO_FRACO, LARANJA
+coordenadas_cor:
+    WORD  28, 27
+    WORD  31, 27
+    WORD  31, 36
+    WORD  28, 36
 tab:
     WORD    interrupcao_asteroide
     WORD    interrupcao_sonda
     WORD    interrupcao_energia   
-    WORD    0
+    WORD    interrupcao_cores
 
 sondas:
     WORD SONDA1_CORD, SONDA1_CORD
@@ -108,12 +132,15 @@ sonda_ligada:
     WORD 0
     WORD 0
     WORD 0
+impacto_flags:
+    WORD 0 ;Flag de impacto sonda 1
+    WORD 0 ;Flag de impacto sonda 2
+    WORD 0 ;Flag de impacto sonda 3
 descontar:
     WORD 0
 tab_asteroide:
-	WORD TIPO
-	WORD COLUNA
-	WORD DIRECAO
+	WORD TIPO, COLUNA, DIRECAO
+
 tab_col:
 	WORD 0FFFFH, 0, 0, 0, 1
 tab_dir:
@@ -151,6 +178,9 @@ SP_energia:
     STACK 100H
 SP_asteroide:
 
+    STACK 100H
+SP_cores:
+
 	
 tecla_carregada:
 	LOCK 0
@@ -164,6 +194,9 @@ energia:
     LOCK 0
 asteroide:
     LOCK 0
+cores:
+    LOCK 0
+
 ;*********************************************************************************
 ;Codigo principal
 ;*********************************************************************************
@@ -177,6 +210,7 @@ inicio:
     EI0
     EI1
     EI2
+    EI3
     EI               
 menu_principal:
     MOV	 R1, IMAGEM1			                    ; cenário de fundo número 0
@@ -205,9 +239,20 @@ obtem_tecla:
     JMP obtem_tecla
 
 testa_C:
+
     CALL fundo_jogo
+
+    CALL inicio_cor
+    MOV [energia], R1
+
     CALL energia_inicio
+
+    
     CALL inicia_asteroide
+    CALL inicia_asteroide
+    CALL inicia_asteroide
+    CALL inicia_asteroide
+
     JMP obtem_tecla
 
 testa_0:
@@ -363,17 +408,21 @@ linha_pixel_seg:
 
 PROCESS SP_sonda1
 sonda_1:
+    MOV R1, 1
+    MOV [ECRA], R1
     MOV R4, sondas
     MOV R1, [R4]
 ciclo_sonda1:
     CALL desenhar_sonda1
+    CMP R5, 1
+    JZ termina_sonda1
     MOV R2, [sonda1]    ; lê o LOCK e bloqueia até a interrupção escrever nele
     CALL apagar_sonda1
 
     MOV R5, 13 ; verifica se chegou ao limite
     CMP R5, R1
     JNZ ciclo_sonda1
-    
+termina_sonda1:
     MOV R1, SONDA1_CORD 
     MOV [R4], R1 
     MOV [R4 + 2], R1
@@ -383,6 +432,12 @@ ciclo_sonda1:
     MOV [R0], R1
     RET
 desenhar_sonda1:
+    MOV R6, R1 
+    SUB R6, 1
+    MOV  [DEFINE_LINHA], R6	    ; seleciona a linha
+    MOV R5, [OBTEM_COR]
+    CMP R5, 0
+    JNZ impacto1
     MOV R3, VERDE
 	MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
 	MOV  [DEFINE_COLUNA], R1	; seleciona a coluna
@@ -399,38 +454,52 @@ apagar_sonda1:
     MOV [R4 + 2], R1
 
     RET
-
+impacto1:
+    MOV R4, impacto_flags
+    MOV R5, 1
+    MOV [R4], R5
+    MOV [asteroide], R1
+    RET
 ;*********************************************************************************
 ; SONDA 2
 ;*********************************************************************************
 
 PROCESS SP_sonda2
 sonda_2:
+    MOV [ECRA], R1
     MOV R4, sondas
     MOV R1, [R4 + 4]
     MOV R2, [R4 + 6]
 ciclo_sonda2:
     CALL desenhar_sonda2
+    CMP R5, 1
+    JZ termina_sonda2
     MOV R0, [sonda2]    ; lê o LOCK e bloqueia até a interrupção escrever nele
     CALL apagar_sonda2
 
     MOV R5, 13 ; verifica se chegou ao limite
     CMP R5, R1
     JNZ ciclo_sonda2
-    
+termina_sonda2:
     MOV R1, SONDA2_LINHA
-    MOV R2, SONDA2_COLUNA 
-    MOV [R4 + 4], R1 
+    MOV R2, SONDA2_COLUNA
+    MOV [R4 + 4], R1
     MOV [R4 + 6], R2
 
     MOV R0, sonda_ligada
     MOV R1, 0H
     MOV [R0 + 2], R1
     RET
-desenhar_sonda2:
+desenhar_sonda2: ; primeiro verifica
+    MOV R6, R1 
+    SUB R6, 1
+    MOV  [DEFINE_LINHA], R6	    ; seleciona a linha
+    MOV R5, [OBTEM_COR]
+    CMP R5, 0
+    JNZ impacto2
     MOV R3, VERDE
-	MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
 	MOV  [DEFINE_COLUNA], R2	; seleciona a coluna
+	MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
 	MOV  [DEFINE_PIXEL], R3	    ; altera a cor do pixel na linha e coluna selecionadas
     RET
 apagar_sonda2:
@@ -443,24 +512,35 @@ apagar_sonda2:
     MOV [R4 + 4], R1
     MOV [R4 + 6], R2
     RET
+
+impacto2:
+    MOV R4, impacto_flags
+    MOV R5, 1
+    MOV [R4 + 2], R5
+    MOV [asteroide], R1
+    RET
 ;*********************************************************************************
 ; SONDA 3
 ;*********************************************************************************
 
 PROCESS SP_sonda3
 sonda_3:
+    MOV R1, 1
+    MOV [ECRA], R1
     MOV R4, sondas
     MOV R1, [R4 + 8]
     MOV R2, [R4 + 10]
 ciclo_sonda3:
     CALL desenhar_sonda3
+    CMP R5, 1
+    JZ termina_sonda3
     MOV R0, [sonda3]    ; lê o LOCK e bloqueia até a interrupção escrever nele
     CALL apagar_sonda3
 
     MOV R5, 13 ; verifica se chegou ao limite
     CMP R5, R1
     JNZ ciclo_sonda3
-    
+termina_sonda3:
     MOV R1, SONDA3_LINHA
     MOV R2, SONDA3_COLUNA 
     MOV [R4 + 8], R1 
@@ -471,6 +551,13 @@ ciclo_sonda3:
     MOV [R0 + 4], R1
     RET
 desenhar_sonda3:
+    ;********************* FAZ DEPOIS ROTINA
+    MOV R6, R1 
+    SUB R6, 1
+    MOV  [DEFINE_LINHA], R6	    ; seleciona a linha
+    MOV R5, [OBTEM_COR]
+    CMP R5, 0
+    JNZ impacto3
     MOV R3, VERDE
 	MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
 	MOV  [DEFINE_COLUNA], R2	; seleciona a coluna
@@ -488,9 +575,14 @@ apagar_sonda3:
     MOV [R4 + 10], R2
     RET
 
-
+impacto3:
+    MOV R4, impacto_flags
+    MOV R5, 1
+    MOV [R4 + 4], R5
+    MOV [asteroide], R1
+    RET
 ;*********************************************************************************
-;Processos
+;Processo Energia
 ;*********************************************************************************
 
 PROCESS SP_energia
@@ -545,9 +637,18 @@ converte_aux:
     SHR R3, 4
     RET
 
+;*********************************************************************************
+; Asteroide 
+;*********************************************************************************
 PROCESS SP_asteroide
 inicia_asteroide:
     CALL gerador_asteroide
+
+    MOV R4, qual_asteroide
+    MOV R1, [R4]
+    MOV [ECRA], R1 
+    CALL incrementar_asteroide
+
     MOV R4, tab_asteroide
     MOV R1, [R4]
     MOV R2, [R4 + 2]
@@ -556,6 +657,7 @@ inicia_asteroide:
 tipo_asteroide:
     CMP R1, 0
     JZ inicia_mineravel
+
     JMP inicia_n_mineravel
 inicia_mineravel:
     MOV R1, asteroide_mineravel
@@ -583,12 +685,52 @@ inicia_esq:
     JMP ciclo_esq
 inicia_meio:
     MOV R2, ASTEROIDE_MEIO
+
+    MOV R11, 0FFFFH
+    CMP R3, R11
+    JZ ciclo_esq
+
+    MOV R11, 1
+    CMP R3, R11
+    JZ ciclo_dir
+
     JMP ciclo_meio
+;********************
+asteroide_destruido_esq:
+    MOV R1, explosao_sprite
+    MOV R8, impacto_flags
+    MOV R11, 0
+    MOV [R8], R11
+    CMP R3, R11
+    JMP termina_esq
+asteroide_destruido_meio:
+    MOV R1, explosao_sprite
+    MOV R8, impacto_flags
+    MOV R11, 0
+    MOV [R8 + 2], R11
+    CMP R3, R11
+    JMP termina_meio
+asteroide_destruido_dir:
+    MOV R1, explosao_sprite
+    MOV R8, impacto_flags
+    MOV R11, 0
+    MOV [R8 + 4], R11
+    CMP R3, R11
+    JMP termina_dir
+
+;********************
+;********************
 inicia_dir:
     MOV R2, ASTEROIDE_DIR
     JMP ciclo_dir
 ciclo_esq:
     CALL desenha_pixels_as
+
+    MOV R8, impacto_flags
+    MOV R11, [R8]
+    CMP R11, 1
+    JZ  asteroide_destruido_esq
+
     MOV R1, [asteroide]
     CALL apaga_as_esq
     ADD R7, 1
@@ -596,9 +738,17 @@ ciclo_esq:
     MOV R1, R6
     CMP R7, R9
     JNZ ciclo_esq
+termina_esq:
+    CALL apaga_as_esq
     RET
 ciclo_meio:
     CALL desenha_pixels_as
+
+    MOV R8, impacto_flags
+    MOV R11, [R8 + 2]
+    CMP R11, 1
+    JZ  asteroide_destruido_meio
+
     MOV R1, [asteroide]
     CALL apaga_as_meio
     ADD R7, 1
@@ -606,9 +756,17 @@ ciclo_meio:
     MOV R1, R6
     CMP R7, R9
     JNZ ciclo_meio
+ termina_meio:
+    CALL apaga_as_meio
     RET
 ciclo_dir:
     CALL desenha_pixels_as
+
+    MOV R8, impacto_flags
+    MOV R11, [R8 + 4]
+    CMP R11, 1
+    JZ  asteroide_destruido_dir
+
     MOV R1, [asteroide]
     CALL apaga_as_dir
     ADD R7, 1
@@ -616,6 +774,8 @@ ciclo_dir:
     MOV R1, R6
     CMP R7, R9
     JNZ ciclo_dir
+termina_dir:
+    CALL apaga_as_dir
     RET
 desenha_pixels_as:
     MOV R8, [R1]
@@ -731,6 +891,85 @@ determina_dir:
 	POP R5
 	RET
     
+incrementar_asteroide: ;funcao que avanca qual o ecra do asteroide
+    PUSH R1
+    PUSH R2 
+    PUSH R3
+aux:
+    MOV R3, 1       ;Mov por causa dos erros de passar so uma variavel
+    MOV R1, qual_asteroide
+    MOV R2, [R1]
+    ADD R2, 1
+    CMP R2, 6
+    JZ resetar_qual
+fim_incrementa:
+    POP R3
+    POP R2
+    POP R1
+    RET
+resetar_qual:
+
+    MOV [R1], R3
+    JMP aux
+
+
+;*********************************************************************************
+;Processo Cores
+;*********************************************************************************
+PROCESS SP_cores
+inicio_cor:
+    MOV R0, 1
+    MOV [ECRA], R0
+    MOV R0, 4
+    MOV R1, [cores]
+ciclo_cor:
+    MOV R3, 0
+    CALL gerador_cor
+    SUB R0, 1
+    CALL pinta
+    CMP R0, 0
+    JNZ ciclo_cor
+    JMP inicio_cor
+gerador_cor:
+    PUSH R1
+    PUSH R2
+    PUSH R0 
+    
+    MOV R0, 2
+    MOV R1, PIN ; move o endereço do PIN para R1
+    MOVB R2, [R1] ; move os bits 0-7 do PIN para R2
+    SHR R2, 5 ; remove os 5 bits mais à direita (para chegar a um número de 0 a 7)
+    MOV R4, cores_possiveis
+    MUL R2, R0
+    MOV R3, [R4 + R2]
+
+    POP R0 
+    POP R2
+    POP R1 
+    RET
+pinta:
+    PUSH R1
+    PUSH R2
+    PUSH R3
+    PUSH R4
+    PUSH R0
+
+    MOV R4, coordenadas_cor
+    MOV R2, 4
+    MUL R0, R2
+    MOV R1, [R4 + R0]
+    MOV [DEFINE_LINHA], R1
+    ADD R0, 2
+    MOV R2, [R4 + R0]
+    MOV [DEFINE_COLUNA], R2 
+    MOV [DEFINE_PIXEL], R3
+
+    POP R0 
+    POP R4 
+    POP R3 
+    POP R2
+    POP R1
+    RET
 ;*********************************************************************************
 ; Interrupcoes
 ;*********************************************************************************
@@ -747,4 +986,8 @@ interrupcao_sonda:
 
 interrupcao_energia:
     MOV  [energia], R1
+    RFE
+
+interrupcao_cores:
+    MOV  [cores], R1
     RFE
