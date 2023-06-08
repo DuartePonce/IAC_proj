@@ -21,24 +21,28 @@ ALTURA     EQU 6            ; Altura do painel
 TAMANHO_ASTEROIDE    EQU 5  ; Tamanho do asteroide
 LIN        EQU 26           ; Linha inicial de desenho do painel
 COL        EQU 24           ; Coluna inicial do desenho do painel
-IMAGEM1    EQU 0            
-IMAGEM2    EQU 1
+IMAGEM1    EQU 0            ; ecra inicial
+IMAGEM2    EQU 1            ; ecra de jogo
+IMAGEM3    EQU 2            ; ecra de derrota
 COLUNA_SONDA    EQU 32      ; Posicao inical da sona
 LINHA_SONDA     EQU 25      ; Posicao inicial da sonda
-SOM1            EQU 0
+SOM1            EQU 0       ; som do disparo de sonda
 
-SONDA1_CORD    EQU 25
+;coordenadas iniciais das diferentes sondas  
+SONDA1_CORD    EQU 25 
 SONDA2_LINHA    EQU 25
 SONDA2_COLUNA   EQU 31
 SONDA3_LINHA    EQU 25
 SONDA3_COLUNA   EQU 39
 
-ENERGIA_INICIAL EQU 103
+ENERGIA_INICIAL EQU 103     ; energia inicial da nave (103 porque retira 3 ao começar o jogo, logo 100)
 PIN   EQU 0E000H ; endereço do periférico PIN (entrada)
-TIPO 	EQU 0
-COLUNA 	EQU 0
-DIRECAO	EQU 0
-ASTEROIDE_ESQ EQU 0
+TIPO 	EQU 0       ; tipo de asteroide (0 nao mineravel; 1,2,3 mineravel)
+COLUNA 	EQU 0       ; coluna inicial do asteroide (-1 esq, 0 meio, 1 dir)
+DIRECAO	EQU 0       ; direção do asteroide (-1 esq, 0 meio, 1 dir)
+
+; colunas iniciais para desenhar asteroides
+ASTEROIDE_ESQ EQU 0         
 ASTEROIDE_MEIO EQU 29
 ASTEROIDE_DIR EQU 59
 
@@ -72,14 +76,14 @@ SELECIONA_CENARIO_FUNDO  EQU COMANDOS + 42H		; endereço do comando para selecio
 SOM                      EQU COMANDOS + 48H     ; Seleciona o audio
 REPRODUCAO               EQU COMANDOS + 5AH     ; Reproduz o audio  
 ECRA                     EQU COMANDOS + 04H     ; Seleciona ecras
-OBTEM_COR                EQU COMANDOS + 10H   ;Obtem cor
+OBTEM_COR                EQU COMANDOS + 10H     ; Obtem cor
 
 ;*********************************************************************************
 ;Zona de dados
 ;*********************************************************************************
 PLACE 2000H
 painel_lista:
-
+;sprite do painel 
     WORD 0,0,0, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, ROXO_ESCURO, 0,0,0
     WORD 0, ROXO_ESCURO, ROXO_ESCURO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_CLARO, ROXO_ESCURO, ROXO_ESCURO, 0
     WORD 0, ROXO_ESCURO, ROXO_CLARO, 0, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, 0, ROXO_CLARO, ROXO_ESCURO, 0
@@ -87,48 +91,51 @@ painel_lista:
     WORD ROXO_ESCURO, ROXO_CLARO, ROXO_CLARO, CINZENTO, PRETO, CINZENTO, PRETO, CINZENTO, CINZENTO, PRETO, PRETO, PRETO, CINZENTO, ROXO_CLARO, ROXO_CLARO, ROXO_ESCURO
     WORD ROXO_ESCURO, ROXO_CLARO, ROXO_CLARO, 0, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO, PRETO, CINZENTO, 0, ROXO_CLARO, ROXO_CLARO, ROXO_ESCURO
 
-asteroide_n_mineravel:
+asteroide_n_mineravel: ;sprite dos asteroides nao mineraveis
     WORD VERMELHO, 0,0,0, VERMELHO
     WORD VERMELHO, 0, VERMELHO, 0, VERMELHO
     WORD VERMELHO, VERMELHO, PRETO, VERMELHO, VERMELHO
     WORD VERMELHO, 0, VERMELHO, 0, VERMELHO
     WORD VERMELHO, 0,0,0, VERMELHO
 
-asteroide_mineravel:
+asteroide_mineravel: ;sprite dos asteroides mineraveis
     WORD 0, CINZENTO, CINZENTO, CINZENTO, 0
     WORD CINZENTO, AZUL, CINZENTO, VERDE, CINZENTO
     WORD CINZENTO, CINZENTO, CINZENTO, CINZENTO, CINZENTO
     WORD CINZENTO, AMARELO, CINZENTO, VERMELHO, CINZENTO
     WORD 0, CINZENTO, CINZENTO, CINZENTO, 0
-explosao_sprite:
+explosao_sprite: ;sprite de explosao dos asteroides
     WORD VERMELHO, 0, 0, VERMELHO, 0
     WORD 0, 0, VERMELHO, 0, VERMELHO
     WORD 0, VERMELHO, 0, 0, 0
     WORD 0, 0, 0, VERMELHO, 0
     WORD VERMELHO, 0, VERMELHO, 0, VERMELHO
-sonda:
+sonda: ;cor da sonda
     WORD VERDE
 qual_asteroide:
     WORD  1
-cores_possiveis:
+cores_possiveis:; tabela com todas as cores que selecionamos aleatoriamente para serem usadas no processo cor
     WORD VERDE, VERMELHO, AZUL, AMARELO, ROSA, AZUL_VERDE, AMARELO_FRACO, LARANJA
 coordenadas_cor:
+; tabela hardcoded das posicoes desejadas de cada um dos pixeis do painel
+;que tem cores a serem mudadas
     WORD  28, 27
     WORD  31, 27
     WORD  31, 36
     WORD  28, 36
-tab:
+tab:    ; as interrupções apenas dão unlock aos processos
     WORD    interrupcao_asteroide
     WORD    interrupcao_sonda
     WORD    interrupcao_energia   
     WORD    interrupcao_cores
 
-sondas:
-    WORD SONDA1_CORD, SONDA1_CORD
-    WORD SONDA2_LINHA, SONDA2_COLUNA
-    WORD SONDA3_LINHA, SONDA3_COLUNA
+sondas: ; coordenadas das sondas
+    WORD SONDA1_CORD, SONDA1_CORD ;sonda1
+    WORD SONDA2_LINHA, SONDA2_COLUNA ;sonda 2
+    WORD SONDA3_LINHA, SONDA3_COLUNA ;sonda3
 
-sonda_ligada:
+sonda_ligada:   ; enquanto a sonda estiver ativa não é possível ativar uma nova (na mesma posição)
+    ; (0 inativa; 1 ativa)
     WORD 0
     WORD 0
     WORD 0
@@ -137,22 +144,25 @@ impacto_flags:
     WORD 0 ;Flag de impacto sonda 2
     WORD 0 ;Flag de impacto sonda 3
 descontar:
+    ; esta flag mostra as mudanças de energia (0 -> -3; 1 -> -5; 2 -> +25)
     WORD 0
-tab_asteroide:
+tab_asteroide: ; inforções uteis para o asteroide
 	WORD TIPO, COLUNA, DIRECAO
 
-tab_col:
+tab_col:    ; algoritmo pseudo-aleatorio da posção ( -1 esq, 0 meio, 1 dir)
 	WORD 0FFFFH, 0, 0, 0, 1
-tab_dir:
+tab_dir:    ; algoritmo pseudo-aleatorio da direção ( -1 esq, 0 meio, 1 dir)
 	WORD 1, 0FFFFH, 0, 1, 0FFFFH
-asteroide_atuais:
+asteroide_atuais:   ; não usamos esta porra para nada xDXDXDXDXDXDXD (ainda)
     WORD 0
     WORD 0
     WORD 0
     WORD 0
 
-energia_nave:
+energia_nave:   ; energia da nave, mudamos o valor consoante o caso
     WORD ENERGIA_INICIAL
+termina_jogo:   ; flag que indica o estado do jogo (0 a correr; 1 terminado)
+    WORD 0
 ;*********************************************************************************
 ; Stacks 
 ;*********************************************************************************
@@ -163,38 +173,38 @@ SP_inicial:
 	STACK 100H		; espaço reservado para a pilha do processo "teclado"
 SP_teclado:			; este é o endereço com que o SP deste processo deve ser inicializado
 
-    STACK 100H
+    STACK 100H      ; espaço reservado para a pilha do processo "sonda1"
 SP_sonda1:
 
-    STACK 100H
+    STACK 100H      ; espaço reservado para a pilha do processo "sonda2"
 SP_sonda2:
 
-    STACK 100H
+    STACK 100H      ; espaço reservado para a pilha do processo "sonda3"
 SP_sonda3:
 
-    STACK 100H
+    STACK 100H      ; espaço reservado para a pilha do processo "energia"
 SP_energia:
 
-    STACK 100H
+    STACK 100H      ; espaço reservado para a pilha do processo "asteroide"
 SP_asteroide:
 
-    STACK 100H
+    STACK 100H      ; espaço reservado para a pilha do processo "cores"
 SP_cores:
 
 	
-tecla_carregada:
+tecla_carregada:    ;   lock teclado
 	LOCK 0
-sonda1:
+sonda1:             ;   lock sonda1
     LOCK 0
-sonda2:
+sonda2:             ;   lock sonda2
     LOCK 0
-sonda3:
+sonda3:             ;   lock sonda3
     LOCK 0
-energia:
+energia:            ;   lock energia
     LOCK 0
-asteroide:
+asteroide:          ;   lock asteroide
     LOCK 0
-cores:
+cores:              ;   lock cores
     LOCK 0
 
 ;*********************************************************************************
@@ -207,11 +217,12 @@ inicio:
     MOV  BTE, tab
     MOV  [APAGA_AVISO], R1          ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
     MOV  [APAGA_ECRÃ], R1	        ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
+    ;Enable base de todas as interrupcoes
     EI0
     EI1
     EI2
     EI3
-    EI               
+    EI
 menu_principal:
     MOV	 R1, IMAGEM1			                    ; cenário de fundo número 0
     MOV  [SELECIONA_CENARIO_FUNDO], R1	            ; seleciona o cenário de fundo
@@ -236,77 +247,78 @@ obtem_tecla:
 	JZ	testa_2
 
 
-    JMP obtem_tecla
+    JMP obtem_tecla ;caso nenhuma das teclas anteriores seja pressionada
 
 testa_C:
+    MOV R4, termina_jogo  ; jogo começa
+    MOV R7, 0
+    MOV [R4], R7          ; mudamos a flag do termina_jogo para 0
+    CALL fundo_jogo       ; desnhamos o painel
 
-    CALL fundo_jogo
+    CALL inicio_cor       ; ativamos as cores a mudarem-se do painel
+    MOV [energia], R1     ; unlock à energia
 
-    CALL inicio_cor
-    MOV [energia], R1
+    CALL energia_inicio   ; a energia ativa-se e já pode ser alterada
 
-    CALL energia_inicio
+    ; inicia 4 asteroides pseudo-aleatoriamente
+    CALL inicia_asteroide 
+    CALL inicia_asteroide
+    CALL inicia_asteroide
+    CALL inicia_asteroide
 
+    JMP obtem_tecla       ; esperamos que o jogador clique noutra tecla
+
+testa_0: ; ativa sonda esquerda
+    MOV R2, sonda_ligada    ;caso a sonda esteja ligada nao vai ser disparada outra vez
+    MOV R0, [R2]            ; entao volta ao obtem tecla
+    CMP R0, 0 
+    JNZ obtem_tecla
+
+    MOV R0, 1
+    MOV [R2], R0 ; ativa a sonda1 
+    CALL sonda_1 ;ativa o processo
+
+    CALL retira_energia_sonda ; retira 5 de energia por ativarmos uma sonda
     
-    CALL inicia_asteroide
-    CALL inicia_asteroide
-    CALL inicia_asteroide
-    CALL inicia_asteroide
-
     JMP obtem_tecla
 
-testa_0:
-    MOV R2, sonda_ligada
-    MOV R0, [R2]
+testa_1: ; ativa sonda meio
+    MOV R2, sonda_ligada    ;caso a sonda esteja ligada nao vai ser disparada outra vez
+    MOV R0, [R2+2]          ; entao volta ao obtem tecla
     CMP R0, 0
     JNZ obtem_tecla
 
     MOV R0, 1
-    MOV [R2], R0
-    CALL sonda_1
+    MOV [R2+2], R0 ; ativa a sonda2
+    CALL sonda_2 ;ativa o processo
 
-    MOV R10, descontar
-    MOV [R10], R0
-
-    MOV [energia], R1
-     
+    CALL retira_energia_sonda ; retira 5 de energia por ativarmos uma sonda
     
     JMP obtem_tecla
 
-testa_1:
-    MOV R2, sonda_ligada
-    MOV R0, [R2+2]
+testa_2: ; ativa sonda direita
+    MOV R2, sonda_ligada    ;caso a sonda esteja ligada nao vai ser disparada outra vez
+    MOV R0, [R2+4]          ; entao volta ao obtem tecla
     CMP R0, 0
     JNZ obtem_tecla
 
     MOV R0, 1
-    MOV [R2+2], R0
-    CALL sonda_2
+    MOV [R2+4], R0 ; ativa a sonda3
+    CALL sonda_3 ;ativa o processo
 
-    MOV R10, descontar
-    MOV [R10], R0
-
-    MOV [energia], R1
-    
+    CALL retira_energia_sonda ; retira 5 de energia por ativarmos uma sonda
 
     JMP obtem_tecla
-
-testa_2:
-    MOV R2, sonda_ligada
-    MOV R0, [R2+4]
-    CMP R0, 0
-    JNZ obtem_tecla
-
-    MOV R0, 1
-    MOV [R2+4], R0
-    CALL sonda_3
-
-    MOV R10, descontar
-    MOV [R10], R0
-
-
-    MOV [energia], R1
-    JMP obtem_tecla
+retira_energia_sonda:   ;rotina que da unlock do processo energia para assim retirar 5 energia ao display
+    PUSH R1
+    PUSH R2
+    MOV R1, 1
+    MOV R2, descontar   ;mudanca da flag de energia que averigua que quantiade descontar
+    MOV [R2], R1
+    MOV [energia], R1 ;unlock da energia
+    POP R2
+    POP R1
+    RET
 ;*********************************************************************************
 ; teclado
 ;*********************************************************************************
@@ -315,24 +327,24 @@ PROCESS SP_teclado
 
 teclado:
     MOV  R6, LINHA
-    MOV  R2, TEC_LIN   ; endere�o do perif�rico das linhas
-    MOV  R3, TEC_COL   ; endere�o do perif�rico das colunas
+    MOV  R2, TEC_LIN   ; endereço do periférico das linhas
+    MOV  R3, TEC_COL   ; endereço do periférico das colunas
     MOV  R5, MASCARA   ; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
 
 ciclo:
-    MOV  R1, 0
+    MOV  R1, 0 ;reset do R1
 
-espera_tecla:        ; neste ciclo espera-se at� uma tecla ser premida
+espera_tecla:        ; neste ciclo espera-se até uma tecla ser premida
     YIELD
     MOV  R1, 10H
     CMP  R1, R6   
     JZ   reset
     MOV  R1, R6 
-    MOVB [R2], R1      ; escrever no perif�rico de sa�da (linhas)
-    MOVB R0, [R3]      ; ler do perif�rico de entrada (colunas)
-    AND  R0, R5        ; elimina bits para al�m dos bits 0-3
+    MOVB [R2], R1      ; escrever no periférico de saída (linhas)
+    MOVB R0, [R3]      ; ler do periférico de entrada (colunas)
+    AND  R0, R5        ; elimina bits para além dos bits 0-3
     SHL  R6, 1
-    CMP  R0, 0         ; h� tecla premida?
+    CMP  R0, 0         ; há tecla premida?
 
     JZ   espera_tecla       ; se nenhuma tecla premida, repete
 
@@ -340,12 +352,12 @@ espera_tecla:        ; neste ciclo espera-se at� uma tecla ser premida
     OR   R1, R0             ; junta coluna (nibble low)
     MOV	[tecla_carregada], R1 ; desbloquia teclado
     
-ha_tecla:              ; neste ciclo espera-se at� NENHUMA tecla estar premida
+ha_tecla:              ; neste ciclo espera-se até NENHUMA tecla estar premida
     YIELD 
-    MOVB R0, [R3]      ; ler do perif�rico de entrada (colunas)
-    AND  R0, R5        ; elimina bits para al�m dos bits 0-3
-    CMP  R0, 0         ; h� tecla premida?
-    JNZ  ha_tecla      ; se ainda houver uma tecla premida, espera at� n�o haver
+    MOVB R0, [R3]      ; ler do periférico de entrada (colunas)
+    AND  R0, R5        ; elimina bits para além dos bits 0-3
+    CMP  R0, 0         ; há tecla premida?
+    JNZ  ha_tecla      ; se ainda houver uma tecla premida, espera até não haver
     JMP ciclo
 
 reset:
@@ -369,8 +381,8 @@ fundo_jogo:
     MOV	 R1, IMAGEM2			                    ; cenário de fundo número 1
     MOV  [SELECIONA_CENARIO_FUNDO], R1	            ; seleciona o cenário de fundo
 posicao_painel:
-    MOV  R1, LIN
-    MOV  R2, COL 
+    MOV  R1, LIN    ;linha inicial do desenho
+    MOV  R2, COL    ;coluna inicial do desenho
 	MOV	 R4, painel_lista		; endereço da tabela que define o painel
 
     MOV  R5, LARGURA			    ; largura do painel
@@ -401,38 +413,49 @@ linha_pixel_seg:
     POP R1
     POP R0
     RET
-
 ;*********************************************************************************
 ; SONDA 1
 ;*********************************************************************************
 
-PROCESS SP_sonda1
+PROCESS SP_sonda1           ; esta a a sonda que se dirije para a esquerda
 sonda_1:
-    MOV R1, 1
+    MOV R1, 1               ; selecao do ecra onde as sondas se encontram
     MOV [ECRA], R1
-    MOV R4, sondas
-    MOV R1, [R4]
-ciclo_sonda1:
-    CALL desenhar_sonda1
+    MOV R4, sondas  ;Tabela com as coordenadas das sondas 
+    MOV R1, [R4]    ;guarda no registo 1 o valor da coordenada
+    ;(so guarda no R1 e nao no R2 tambem porque
+    ; ambas as coordenadas do movimento sao iguais)
+ciclo_sonda1: ; este é o ciclo para movimentar a sonda
+    MOV R10, termina_jogo   ; verifica o estado do jogo
+    MOV R11, [R10]
+    CMP R11, 1  ;caso 1 para terminar os processos
+    JZ termina_sonda1       ; caso o jogo esteja terminado acaba o processo
+    CALL desenhar_sonda1 ;desenha a sonda
+    CMP R5, 1
+    JZ termina_sonda1
     MOV R2, [sonda1]    ; lê o LOCK e bloqueia até a interrupção escrever nele
     CALL apagar_sonda1
 
-    MOV R5, 13 ; verifica se chegou ao limite
+    MOV R5, 13 ; verifica se chegou ao limite do range da sonda
     CMP R5, R1
     JNZ ciclo_sonda1
-    
+termina_sonda1:
+    MOV R4, sondas
     MOV R1, SONDA1_CORD 
-    MOV [R4], R1 
-    MOV [R4 + 2], R1
+    MOV [R4], R1 ;reseta as oordenadas para a proxima sonda lancada
+    MOV [R4 + 2], R1 
 
-    MOV R0, sonda_ligada
+    MOV R0, sonda_ligada ; muda a flag de ativa para desativa
     MOV R1, 0H
-    MOV [R0], R1
+    MOV [R0], R1 ; desliga a sonda
     RET
 desenhar_sonda1:
+    MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
+    MOV  [DEFINE_COLUNA], R1	; seleciona a coluna
+    MOV R5, [OBTEM_COR]         ; no caso de sonda estar a sobrepor outra cor significa que há impacto
+    CMP R5, 0
+    JNZ impacto1    ;deteta impacto entre a sonda 1 e um asteroide
     MOV R3, VERDE
-	MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
-	MOV  [DEFINE_COLUNA], R1	; seleciona a coluna
 	MOV  [DEFINE_PIXEL], R3	    ; altera a cor do pixel na linha e coluna selecionadas
     RET
 apagar_sonda1:
@@ -441,57 +464,61 @@ apagar_sonda1:
 	MOV  [DEFINE_COLUNA], R1	; seleciona a coluna
 	MOV  [DEFINE_PIXEL], R3	    ; altera a cor do pixel na linha e coluna selecionadas
 
-    SUB R1, 1
-    MOV [R4], R1
+    SUB R1, 1  ; sobe 1 pixel e vai 1 para a esquerda (decrementamos a linha e a coluna)
+    MOV [R4], R1    ;guarda as coordenadas da sonda na tabela
     MOV [R4 + 2], R1
 
     RET
-
+impacto1: ;rotina que muda a flag de impacto da sonda 1 e da unlock do processo asteroide
+    MOV R4, impacto_flags
+    MOV R5, 1
+    MOV [R4], R5
+    MOV [asteroide], R1
+    RET
 ;*********************************************************************************
 ; SONDA 2
 ;*********************************************************************************
 
-PROCESS SP_sonda2
+PROCESS SP_sonda2                   ; esta a a sonda que se dirije para o meio
 sonda_2:
-    MOV R1, 1
+    MOV R1, 1 ; selecao do ecra onde as sondas se encontram
     MOV [ECRA], R1
-    MOV R4, sondas
-    MOV R1, [R4 + 4]
-    MOV R2, [R4 + 6]
-ciclo_sonda2:
-    CALL desenhar_sonda2
+    MOV R4, sondas ;Tabela com as coordenadas das sondas
+    MOV R1, [R4 + 4] ;guarda no registo 1 o valor da linha inicial da sonda2
+    MOV R2, [R4 + 6] ;guarda no registo 2 o valor da coluna inicial da sonda2
+ciclo_sonda2:   ; este é o ciclo para movimentar a sonda
+    MOV R10, termina_jogo   ; verifica o estado do jogo
+    MOV [R10], R11
+    CMP R11, 1  ;caso 1 para terminar os processos
+    JZ termina_sonda2   ; caso o jogo esteja terminado acaba o processo
+    CALL desenhar_sonda2 ;desenha a sonda
+    CMP R5, 1
+    JZ termina_sonda2
     MOV R0, [sonda2]    ; lê o LOCK e bloqueia até a interrupção escrever nele
     CALL apagar_sonda2
 
-    MOV R5, 13 ; verifica se chegou ao limite
+    MOV R5, 13 ; verifica se chegou ao limite do range da sonda
     CMP R5, R1
     JNZ ciclo_sonda2
-    
+termina_sonda2:
+    MOV R4, sondas
     MOV R1, SONDA2_LINHA
-    MOV R2, SONDA2_COLUNA 
+    MOV R2, SONDA2_COLUNA
+    ;reseta asc oordenadas para a proxima sonda lancada
     MOV [R4 + 4], R1 
     MOV [R4 + 6], R2
 
-    MOV R0, sonda_ligada
+    MOV R0, sonda_ligada ; muda a flag de ativa para desativa
     MOV R1, 0H
-    MOV [R0 + 2], R1
+    MOV [R0 + 2], R1    ; desliga a sonda
     RET
-desenhar_sonda2:
-    MOV R3, VERDE
+desenhar_sonda2: ; primeiro verifica
+    MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
 	MOV  [DEFINE_COLUNA], R2	; seleciona a coluna
-
-;********************* FAZ DEPOIS ROTINA
-    MOV R6, R1 
-    SUB R6, 1
-    MOV  [DEFINE_LINHA], R6	    ; seleciona a linha
-    MOV R5, [OBTEM_COR]
-
-    CMP R5, 0
+    MOV R5, [OBTEM_COR] ; no caso de sonda estar a sobrepor outra cor significa que há impacto
+    CMP R5, 0   
     JNZ impacto2
-;*********************
-
-desenhar_2:
-	MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
+    MOV R3, VERDE
 	MOV  [DEFINE_PIXEL], R3	    ; altera a cor do pixel na linha e coluna selecionadas
     RET
 apagar_sonda2:
@@ -500,51 +527,62 @@ apagar_sonda2:
 	MOV  [DEFINE_COLUNA], R2	; seleciona a coluna
 	MOV  [DEFINE_PIXEL], R3	    ; altera a cor do pixel na linha e coluna selecionadas
 
-    SUB R1, 1
+    SUB R1, 1    ; sobe 1 pixel e vai 1 para a esquerda (decrementamos a linha e a coluna)
+    ;guarda as coordenadas da sonda na tabela
     MOV [R4 + 4], R1
     MOV [R4 + 6], R2
     RET
 
-;*********************
-impacto2:
+impacto2: ;rotina que muda a flag de impacto da sonda 1 e da unlock do processo asteroide
     MOV R4, impacto_flags
     MOV R5, 1
     MOV [R4 + 2], R5
     MOV [asteroide], R1
-    JMP desenhar_2
+    RET
 ;*********************************************************************************
 ; SONDA 3
 ;*********************************************************************************
 
-PROCESS SP_sonda3
+PROCESS SP_sonda3                   ; esta a a sonda que se dirije para a direita
 sonda_3:
-    MOV R1, 1
+    MOV R1, 1   ; selecao do ecra onde as sondas se encontram
     MOV [ECRA], R1
-    MOV R4, sondas
-    MOV R1, [R4 + 8]
-    MOV R2, [R4 + 10]
-ciclo_sonda3:
-    CALL desenhar_sonda3
+    MOV R4, sondas  ;Tabela com as coordenadas das sondas 
+    MOV R1, [R4 + 8]    ;guarda no registo 1 o valor da linha inicial da sonda3
+    MOV R2, [R4 + 10]   ;guarda no registo 2 o valor da coluna inicial da sonda3
+ciclo_sonda3:   ; este é o ciclo para movimentar a sonda
+    MOV R10, termina_jogo   ; verifica o estado do jogo
+    MOV [R10], R11
+    CMP R11, 1  ;caso 1 para terminar os processos
+    JZ termina_sonda3   ; caso o jogo esteja terminado acaba o processo
+    CALL desenhar_sonda3 ;desenha a sonda
+    CMP R5, 1
+    JZ termina_sonda3
     MOV R0, [sonda3]    ; lê o LOCK e bloqueia até a interrupção escrever nele
     CALL apagar_sonda3
 
-    MOV R5, 13 ; verifica se chegou ao limite
+    MOV R5, 13 ; verifica se chegou ao limite do range da sonda
     CMP R5, R1
     JNZ ciclo_sonda3
-    
+termina_sonda3:
+    MOV R4, sondas
     MOV R1, SONDA3_LINHA
     MOV R2, SONDA3_COLUNA 
+    ;reseta asc oordenadas para a proxima sonda lancada   
     MOV [R4 + 8], R1 
     MOV [R4 + 10], R2
 
-    MOV R0, sonda_ligada
+    MOV R0, sonda_ligada    ; muda a flag de ativa para desativa
     MOV R1, 0H
-    MOV [R0 + 4], R1
+    MOV [R0 + 4], R1     ; desliga a sonda
     RET
-desenhar_sonda3:
-    MOV R3, VERDE
+desenhar_sonda3:    ; primeiro verifica
 	MOV  [DEFINE_LINHA], R1	    ; seleciona a linha
 	MOV  [DEFINE_COLUNA], R2	; seleciona a coluna
+    MOV R5, [OBTEM_COR]  ; no caso de sonda estar a sobrepor outra cor significa que há impacto
+    CMP R5, 0
+    JNZ impacto3
+    MOV R3, VERDE
 	MOV  [DEFINE_PIXEL], R3	    ; altera a cor do pixel na linha e coluna selecionadas
     RET
 apagar_sonda3:
@@ -553,58 +591,96 @@ apagar_sonda3:
 	MOV  [DEFINE_COLUNA], R2	; seleciona a coluna
 	MOV  [DEFINE_PIXEL], R3	    ; altera a cor do pixel na linha e coluna selecionadas
 
-    SUB R1, 1
+    SUB R1, 1 
     ADD R2, 1
+    ; sobe 1 pixel e vai 1 para a direita a (decrementamos a linha e a coluna)
+    ;guarda as coordenadas da sonda na tabela
     MOV [R4 + 8], R1
     MOV [R4 + 10], R2
     RET
 
-
+impacto3:   ;rotina que muda a flag de impacto da sonda 1 e da unlock do processo asteroide
+    MOV R4, impacto_flags
+    MOV R5, 1
+    MOV [R4 + 4], R5
+    MOV [asteroide], R1
+    RET
 ;*********************************************************************************
 ;Processo Energia
 ;*********************************************************************************
 
 PROCESS SP_energia
 energia_inicio:
-    MOV R4, energia_nave
+    MOV R4, energia_nave ; vamos alterar a flag da energia nave durante o processo
     MOV R9, [R4]
 energia_purpolsores:
     MOV R10, descontar
-    MOV R11, [R10]
+    MOV R11, [R10]       ; verificamos o descontar para saber qual é o tipo de alteração à energia
 
     CMP R11, 1
-    JZ sub_5        
-    JMP sub_3
+    JZ sub_5             ; uma sonda foi ativada logo tirmos 5
+    CMP R11, 2
+    JZ energia_as_mineravel ; acertamos num asteroide minerável logo acrecentamos 25
+    JMP sub_3            ; retiramos 3 como procedimento normal
 energia_ciclo:
-    CALL converte
-    MOV R1, [energia]
-    JMP energia_purpolsores
-
+    CMP R9, 1
+    JLT termina_tudo        ; no caso da energia ser inferior a 0 termina este jogo lindo :)
+    CALL converte           ; converte hexadecimal para decimal ("hexadecimal falso")
+    MOV R1, [energia]       ; damos lock ao proceso
+    JMP energia_purpolsores ; repete o ciclo
+termina_energia:
+    RET
 sub_3:
     SUB R9, 3
-    JMP energia_ciclo
+    JMP energia_ciclo        ; repete o ciclo
 sub_5:
     SUB R9, 5
 
-    MOV R10, descontar
+    MOV R10, descontar       ; redefine a flag para retirar normalmente na próxima entrada no processo
     MOV R0, 0
     MOV [R10], R0 
 
-    JMP energia_ciclo
-; (das perdas de energia ao disparar e os ganhos ao minerar asteroides bons)
-; energia_disparo
-; energia_as_mineravel
+    JMP energia_ciclo        ; repete o ciclo
+energia_as_mineravel: ; Funcao que incrementa 25 de energia quando se destroi um asteroide mineravel
+    MOV R6, 25H ;valor primeiro passado para um registo
+    ADD R9, R6  ;para depois se adicionar ao registo que trata e contem o valor em hexadecimal da energia
+    MOV R0, 0
+    MOV [R10], R0   ;mudanca do estado da flag para o caso base 0
+    JMP energia_ciclo        ; repete o ciclo da energia 
+
+termina_tudo:
+    MOV R6, termina_jogo ; ativa a flag para terminar o jogo
+    MOV R7, 1
+    MOV [R6], R7
+    MOV [APAGA_AVISO], R1
+    MOV [APAGA_ECRÃ], R1
+    MOV R7, IMAGEM3         ; implementa o ecrã de derrota
+    MOV [SELECIONA_CENARIO_FUNDO], R7
+    JMP termina_energia
 
 converte:
     MOV R0, DISPLAYS
-    MOV R1, R9
-    MOV R3, 0
-    MOV R4, 16
-    MOV R5, 10
+    MOV R1, R9  ; copiamos a energia atual para podermos alterar
+    MOV R3, 0   ; guardamos a converção no R3
+    MOV R4, 16  ; como apenas se podem MUL registos o R4 serve como SHL 4n (n natural)
+    MOV R5, 10  ; como apenas se podem DIV e MOD registos R5 = 10
     CALL converte_aux
     MOV [R0], R3
     RET
-converte_aux:
+;********************************************************************************
+; Tomemos como exemplo o número A7H que equival a 167 decimal
+; o objetivo é com que o R3 fique 0001 0006 0007
+; inicialmente retiramos o ultimo algarismo (7) com MOD R2, R5
+; e fazemos a divizão inteira (DIV R1, R5) que nos dá 16
+; damos SHL 4 (inicialmente) ao 7 -> 0007 0000
+; adicionamos ao R3 7 ficando este 0007 0000
+; com o mesmo procedimento retiramos o 6
+; agora damos SHL 8 ficando 0006 0000 0000
+; assim adiante até retirarmos todos os algarismos
+; repara-se que no final R3 fica 0001 0006 0007 0000
+; logo apenas fazemos SHR 4 para o arranjarmos devidamente
+;*********************************************************************************
+converte_aux:   ; trata-se da converção propriamente dita aqui
     MOV R2, R1
     MOD R2, R5
     DIV R1, R5
@@ -616,161 +692,224 @@ converte_aux:
     SHR R3, 4
     RET
 
+
 ;*********************************************************************************
 ; Asteroide 
 ;*********************************************************************************
 PROCESS SP_asteroide
 inicia_asteroide:
-    CALL gerador_asteroide
+    CALL gerador_asteroide ; gera numeros aleatórios para o TIPO, POSICAO e DIREÇÃO
 
-    MOV R4, qual_asteroide
+    MOV R4, qual_asteroide 
     MOV R1, [R4]
     MOV [ECRA], R1 
     CALL incrementar_asteroide
 
-    MOV R4, tab_asteroide
-    MOV R1, [R4]
-    MOV R2, [R4 + 2]
-    MOV R3, [R4 + 4]
-    JMP tipo_asteroide
+    MOV R4, tab_asteroide ; flag das caracteristicas do asteroide
+    MOV R1, [R4]          ; tipo do asteroide
+    MOV R2, [R4 + 2]      ; posição
+    MOV R3, [R4 + 4]      ; direção
+    JMP tipo_asteroide    ; verifica o tipo
 tipo_asteroide:
-    CMP R1, 0
-    JZ inicia_mineravel
+    CMP R1, 0             ; 0 se for minerável
+    JZ inicia_mineravel   ; jump no caso de for verdade
 
-    JMP inicia_n_mineravel
+    JMP inicia_n_mineravel ; jump no caso de for falso
 inicia_mineravel:
-    MOV R1, asteroide_mineravel
-    MOV R6, R1
-    JMP posicao_asteroide
+    MOV R1, asteroide_mineravel ; flag que define as cores do mineravel
+    MOV R6, R1                  ; copia para depois dar reset
+    JMP posicao_asteroide       ; verifica a posição
 inicia_n_mineravel:
-    MOV R1, asteroide_n_mineravel
-    MOV R6, R1
-    JMP posicao_asteroide
+    MOV R1, asteroide_n_mineravel ; flag que define as cores do não minerável
+    MOV R6, R1                    ; copia para depois dar reset 
+    JMP posicao_asteroide         ; verifica a posição
 posicao_asteroide:
-    MOV R5, 5 ; comprimento e largura
+    MOV R5, 5 ; comprimento
     MOV R7, 0 ; linha
-    MOV R9, 31 ; limite
-    MOV R10, 5
-    CMP R2, 0FFFFH
-    JZ inicia_esq
+    MOV R9, 28 ; limite
+    MOV R10, 5 ; largura
+    CMP R2, 0FFFFH ; no caso de -1 a pos é a da esquerda
+    JZ inicia_esq ; jump para o procedimento da esquerda
 
-    CMP R2, 0
-    JZ inicia_meio
+    CMP R2, 0 ; no caso de 0 a pos é a do meio
+    JZ inicia_meio ; jump para o procedimento do meio
 
-    CMP R2, 1
-    JZ inicia_dir
+    CMP R2, 1 ; no caso de 1 a pos é a do direito
+    JZ inicia_dir ; jump para o procedimento da direita
 inicia_esq:
     MOV R2, ASTEROIDE_ESQ ; coluna inicial
-    JMP ciclo_esq
+    JMP ciclo_esq ; vai para o ciclo da esquerda
 inicia_meio:
-    MOV R2, ASTEROIDE_MEIO
+    MOV R2, ASTEROIDE_MEIO ; coluna inicial
 
-    MOV R11, 0FFFFH
-    CMP R3, R11
-    JZ ciclo_esq
+    MOV R11, 0FFFFH ; verifica a direção caso o asteroide esteja no meio
+    CMP R3, R11 ; se for -1 vai para a esquerda
+    JZ ciclo_esq ; jump para o ciclo da esquerda
 
-    MOV R11, 1
-    CMP R3, R11
-    JZ ciclo_dir
+    MOV R11, 1 ; verifica a direção caso o asteroide esteja no meio
+    CMP R3, R11 ; se for 0 vai para o meio
+    JZ ciclo_dir ; jump para o ciclo da direita
 
+    JMP ciclo_meio ; caso não seja para a esquerda nem para a direita vai para o meio
 
-
-    JMP ciclo_meio
-;********************
-asteroide_destruido:
-    MOV R1, explosao_sprite
-    MOV R8, impacto_flags
-    MOV R11, 0
-    MOV [R8 + 2], R11
-
-    CMP R3, R11
-    JZ ciclo_meio
-
-;********************
-;********************
 inicia_dir:
-    MOV R2, ASTEROIDE_DIR
-    JMP ciclo_dir
+    MOV R2, ASTEROIDE_DIR ; coluna inicial
+    JMP ciclo_dir ; vai para o ciclo da direita
+asteroide_destruido_esq:
+    MOV R1, explosao_sprite ; flag da animação de explusão
+    MOV R8, impacto_flags ; flag para indicar impacto
+    MOV R11, 0 ; impacto foi processado a flag é reposta
+    MOV [R8], R11 ; redefine a flag para 0
+    MOV R6, [R4] ; verifica se o tipo é minerável
+
+    CMP R6, 0 ; caso seja minerável temos de aumentar energia
+    JZ aumenta_energia ; jump para aumentar energia
+termina_asteroide_esq:
+    CALL inicia_asteroide ; inicia novamente mas agora com o formato "asteroide destruido"
+    CALL desenha_pixels_as ; desenha os pixeis deste asteroide destruido
+    MOV R1, [asteroide] ; da um tempinho para ele não expludir instantaniamente
+    MOV R1, [asteroide] ; da um tempinho para ele não expludir instantaniamente
+    CALL apaga_as_esq ; apaga o asteroide
+    RET ; termina o processo do asteroide
+asteroide_destruido_meio:
+    MOV R1, explosao_sprite ; flag da animação de explusão
+    MOV R8, impacto_flags ; flag para indicar impacto
+    MOV R11, 0 ; impacto foi processado a flag é reposta
+    MOV [R8 + 2], R11 ; redefine a flag para 0
+    MOV R6, [R4] ; verifica se o tipo é minerável
+    CMP R6, 0 ; caso seja minerável temos de aumentar energia
+    JZ aumenta_energia ; jump para aumentar energia
+termina_asteroide_meio:
+    CALL inicia_asteroide ; inicia novamente mas agora com o formato "asteroide destruido"
+    CALL desenha_pixels_as ; desenha os pixeis deste asteroide destruido
+    MOV R1, [asteroide] ; da um tempinho para ele não expludir instantaniamente
+    MOV R1, [asteroide] ; da um tempinho para ele não expludir instantaniamente
+    CALL apaga_as_meio ; apaga o asteroide
+    RET ; termina o processo do asteroide
+asteroide_destruido_dir:
+    MOV R1, explosao_sprite ; flag da animação de explusão
+    MOV R8, impacto_flags ; flag para indicar impacto
+    MOV R11, 0 ; impacto foi processado a flag é reposta
+    MOV [R8 + 4], R11 ; redefine a flag para 0
+    MOV R6, [R4] ; verifica se o tipo é minerável
+    CMP R6, 0 ; caso seja minerável temos de aumentar energia
+    JZ aumenta_energia ; jump para aumentar energia
+termina_asteroide_dir:
+    CALL inicia_asteroide ; inicia novamente mas agora com o formato "asteroide destruido"
+    CALL desenha_pixels_as ; desenha os pixeis deste asteroide destruido
+    MOV R1, [asteroide] ; da um tempinho para ele não expludir instantaniamente
+    MOV R1, [asteroide] ; da um tempinho para ele não expludir instantaniamente
+    CALL apaga_as_dir ; apaga o asteroide
+    RET ; termina o processo do asteroide
 ciclo_esq:
-    CALL desenha_pixels_as
-    MOV R1, [asteroide]
-    CALL apaga_as_esq
-    ADD R7, 1
-    ADD R10, 1
-    MOV R1, R6
-    CMP R7, R9
-    JNZ ciclo_esq
-    RET
+    CALL desenha_pixels_as ; desenha os pixeis do asteroide
+
+    MOV R8, impacto_flags ; assume a flag do impacto
+    MOV R11, [R8] ; verifica se o astroide foi impactado
+    CMP R11, 0 ; caso seja diferente de 0 ocorreu impacto
+    JNZ  asteroide_destruido_esq ; salta para o asteroide destruido
+
+    MOV R1, [asteroide] ; da lock para passar para outros processos
+    CALL apaga_as_esq ; apaga o asteroide queriando uma perceção de movimento
+    ADD R7, 1 ; aumenta a linha poeque os asteroides descem
+    ADD R10, 1 ; aumenta a largura para poder ser comparada
+    MOV R1, R6 ; da reset à flag da construção do asteroide
+    CMP R7, R9 ; no caso do asteroide chegar ao limite um asteroide novo vem
+    JNZ ciclo_esq ; repete o ciclo
+    JMP inicia_asteroide ; caso contratio, novo asteroide
 ciclo_meio:
-    CALL desenha_pixels_as
+    CALL desenha_pixels_as ; desenha os pixeis do asteroide
 
-    MOV R8, impacto_flags
-    MOV R11, [R8 + 2]
-    CMP R11, 1
-    JZ  asteroide_destruido
+    MOV R8, impacto_flags ; assume a flag do impacto
+    MOV R11, [R8 + 2] ; verifica se o astroide foi impactado
+    CMP R11, 0 ; caso seja diferente de 0 ocorreu impacto
+    JNZ  asteroide_destruido_meio ; salta para o asteroide destruido
 
-    MOV R1, [asteroide]
-    CALL apaga_as_meio
-    ADD R7, 1
-    ADD R10, 1
-    MOV R1, R6
-    CMP R7, R9
-    JNZ ciclo_meio
-    RET
+    MOV R1, [asteroide] ; da lock para passar para outros processos
+    CALL apaga_as_meio ; apaga o asteroide queriando uma perceção de movimento
+    ADD R7, 1 ; aumenta a linha poeque os asteroides descem
+    ADD R10, 1 ; aumenta a largura para poder ser comparada
+    MOV R1, R6 ; da reset à flag da construção do asteroide
+    CMP R7, R9 ; no caso do asteroide chegar ao limite um asteroide novo vem
+    JNZ ciclo_meio ; repete o ciclo
+    JMP inicia_asteroide ; caso contratio, novo asteroide
 ciclo_dir:
-    CALL desenha_pixels_as
-    MOV R1, [asteroide]
-    CALL apaga_as_dir
-    ADD R7, 1
-    ADD R10, 1
-    MOV R1, R6
-    CMP R7, R9
-    JNZ ciclo_dir
-    RET
+    CALL desenha_pixels_as ; desenha os pixeis do asteroide
+
+    MOV R8, impacto_flags ; assume a flag do impacto
+    MOV R11, [R8 + 4] ; verifica se o astroide foi impactado
+    CMP R11, 0 ; caso seja diferente de 0 ocorreu impacto
+    JNZ  asteroide_destruido_dir ; salta para o asteroide destruido
+
+    MOV R1, [asteroide] ; da lock para passar para outros processos
+    CALL apaga_as_dir ; apaga o asteroide queriando uma perceção de movimento
+    ADD R7, 1 ; aumenta a linha poeque os asteroides descem
+    ADD R10, 1 ; aumenta a largura para poder ser comparada
+    MOV R1, R6 ; da reset à flag da construção do asteroide
+    CMP R7, R9 ; no caso do asteroide chegar ao limite um asteroide novo vem
+    JNZ ciclo_dir ; repete o ciclo
+    JMP inicia_asteroide ; caso contratio, novo asteroide
+;*********************************************************************************
+; Funcoes que tratam do incremento de 25 energia
+; quando a sonda colide com um asteroide mineravel
+;*********************************************************************************
+aumenta_energia:
+    MOV [energia], R1 ; da unlock à energia para a mudar
+    MOV R11, 2 ; 2 é o sinal da flag "descontar" para +25H
+    MOV R6, descontar ; assume a flag de descontar
+    MOV [R6], R11 ; muda o valor da flag
+
+    CMP R3, 0FFFFH ; termina o procedimento esquerda se for -1
+    JZ termina_asteroide_esq
+    CMP R3, 0 ; termina o procedimento meio se for 0
+    JZ termina_asteroide_meio
+    CMP R3, 1 ; termina o procedimento direirto se for 1
+    JZ termina_asteroide_dir
+
 desenha_pixels_as:
-    MOV R8, [R1]
-    MOV [DEFINE_LINHA], R7
-    MOV [DEFINE_COLUNA], R2
-    MOV [DEFINE_PIXEL], R8
+    MOV R8, [R1] ; obtem a cor daquele pixel
+    MOV [DEFINE_LINHA], R7 ; define a linha
+    MOV [DEFINE_COLUNA], R2 ; define a coluna
+    MOV [DEFINE_PIXEL], R8 ; define a cor
     ADD R1, 2 ;proxima cor
     ADD R2, 1 ;proxima coluna
     SUB R5, 1 ; 0 chegou ao fim do comprimento
-    JNZ desenha_pixels_as
+    JNZ desenha_pixels_as ; repete caso não chegue ao fim do comprimento
 linha_pixel_seg_as:
     MOV R5, 5 ;reset comprimento
     ADD R7, 1 ;proxima linha
     SUB R2, 5 ;reset coluna
-    CMP R7, R10
-    JNZ desenha_pixels_as
-    SUB R7, 5
+    CMP R7, R10 ; caso a largura for diferente ao numero da linha repete
+    JNZ desenha_pixels_as ; volta para desenha_pixeis_as
+    SUB R7, 5 ; a linha volta ao inicio para depois se desenhar novamente
     RET
 apaga_as_esq:
-    CALL apaga_pixeis_as
-    ADD R2, 1
+    CALL apaga_pixeis_as ; apaga pixeis dos asteroides da esquerda
+    ADD R2, 1 ; poxima coluna
     RET
 apaga_as_meio:
-    CALL apaga_pixeis_as
+    CALL apaga_pixeis_as ; apaga pixeis dos asteroides do meio
     RET
 apaga_as_dir:
-    CALL apaga_pixeis_as
-    SUB R2, 1
+    CALL apaga_pixeis_as ; apaga pixeis dos asteroides da direita
+    SUB R2, 1 ; proxima coluna
     RET
 apaga_pixeis_as:
-    MOV R8, 0
-    MOV [DEFINE_LINHA], R7
-    MOV [DEFINE_COLUNA], R2
-    MOV [DEFINE_PIXEL], R8
-    ADD R1, 2
-    ADD R2, 1
-    SUB R5, 1
-    JNZ apaga_pixeis_as
+    MOV R8, 0 ; obtem a cor daquele pixel
+    MOV [DEFINE_LINHA], R7 ; define a linha
+    MOV [DEFINE_COLUNA], R2 ; define a coluna
+    MOV [DEFINE_PIXEL], R8 ; define a cor
+    ADD R1, 2 ;proxima cor
+    ADD R2, 1 ;proxima coluna
+    SUB R5, 1 ; 0 chegou ao fim do comprimento
+    JNZ apaga_pixeis_as ; repete caso não chegue ao fim do comprimento
 apaga_linha_seg:
-    MOV R5, 5
-    ADD R7, 1
-    SUB R2, 5
-    CMP R7, R10
-    JNZ apaga_pixeis_as
-    SUB R7, 5
+    MOV R5, 5 ;reset comprimento
+    ADD R7, 1 ;proxima linha
+    SUB R2, 5 ;reset coluna
+    CMP R7, R10 ; caso a largura for diferente ao numero da linha repete
+    JNZ apaga_pixeis_as ; volta a apaga_pixeis_as
+    SUB R7, 5 ; a linha volta ao inicio para depois se desenhar novamente
     RET
 gerador_asteroide:
 	PUSH R1
@@ -840,7 +979,10 @@ determina_dir:
 	POP R6
 	POP R5
 	RET
-    
+
+;*********************************************************************************
+;Funcoes que tem o objetivo de detetar e especificar os ecras de cada asteroide
+;*********************************************************************************
 incrementar_asteroide: ;funcao que avanca qual o ecra do asteroide
     PUSH R1
     PUSH R2 
@@ -861,25 +1003,30 @@ resetar_qual:
 
     MOV [R1], R3
     JMP aux
-
-
 ;*********************************************************************************
-;Processo Cores
+;Processo Cores - Processo que trata da implementacao de rotinas que mudam
+;                 as cores de quatro pixeis especificos pseudo-aleatoriamente
 ;*********************************************************************************
 PROCESS SP_cores
 inicio_cor:
-    MOV R0, 1
-    MOV [ECRA], R0
-    MOV R0, 4
-    MOV R1, [cores]
+    MOV R0, 1       ; especifica no processo qual o ecra que sera usado 
+    MOV [ECRA], R0  
+    MOV R0, 4       ;numero de pixeis a pintar que e decrementado por cada pixel pintado
+    MOV R1, [cores] ;da lock ao processo cores
 ciclo_cor:
+    MOV R4, termina_jogo    
+    MOV R5, [R4]
+    CMP R5, 1
+    JZ termina_cor ; Averiguacao do estado da flag e jump para terminar a cor
     MOV R3, 0
-    CALL gerador_cor
+    CALL gerador_cor    ;rotina que gera a cor aleatoriamente
     SUB R0, 1
-    CALL pinta
+    CALL pinta ; Rotina que pinta o pixel
     CMP R0, 0
-    JNZ ciclo_cor
+    JNZ ciclo_cor ; caso ainda hajam pixeis a pintar repete o ciclo
     JMP inicio_cor
+termina_cor:
+    RET
 gerador_cor:
     PUSH R1
     PUSH R2
@@ -891,7 +1038,8 @@ gerador_cor:
     SHR R2, 5 ; remove os 5 bits mais à direita (para chegar a um número de 0 a 7)
     MOV R4, cores_possiveis
     MUL R2, R0
-    MOV R3, [R4 + R2]
+    ; usa o valor aleatorio em r2 para assim descobrir uma cor da tabela e guarda em r3
+    MOV R3, [R4 + R2] 
 
     POP R0 
     POP R2
@@ -904,15 +1052,15 @@ pinta:
     PUSH R4
     PUSH R0
 
-    MOV R4, coordenadas_cor
-    MOV R2, 4
-    MUL R0, R2
-    MOV R1, [R4 + R0]
+    MOV R4, coordenadas_cor ;tabela das coordenadas dos pixeis a pintar
+    MOV R2, 4   ;constante multiplicadora para se saltar na tabela eficientemente
+    MUL R0, R2  ;multiplicar o pixel(R0) por 4 para se descobrir a linha da tabela desse pixel
+    MOV R1, [R4 + R0]   ;guardar a sua linha respetiva
     MOV [DEFINE_LINHA], R1
-    ADD R0, 2
-    MOV R2, [R4 + R0]
+    ADD R0, 2   ;adicionar 2 para avancar na tabela
+    MOV R2, [R4 + R0]   ;guardar a coluna respetiva ao pixel
     MOV [DEFINE_COLUNA], R2 
-    MOV [DEFINE_PIXEL], R3
+    MOV [DEFINE_PIXEL], R3  ;pintar
 
     POP R0 
     POP R4 
@@ -924,10 +1072,10 @@ pinta:
 ; Interrupcoes
 ;*********************************************************************************
 interrupcao_asteroide:
-    MOV [asteroide], R1
+    MOV [asteroide], R1 ;unlock do processo asteroide 
     RFE
-interrupcao_sonda:
-
+interrupcao_sonda:  
+    ; unlock dos processos das sondas 
     MOV [sonda1], R1
     MOV [sonda3], R1
     MOV [sonda2], R1
@@ -935,9 +1083,11 @@ interrupcao_sonda:
     RFE
 
 interrupcao_energia:
+    ;unlock do processo de energia
     MOV  [energia], R1
     RFE
 
 interrupcao_cores:
+    ;unlock do processo cor
     MOV  [cores], R1
     RFE
