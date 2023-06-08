@@ -260,8 +260,8 @@ testa_C:
 
     CALL energia_inicio   ; a energia ativa-se e já pode ser alterada
 
-    
-    CALL inicia_asteroide ; inicia 4 asteroides pseudo-aleatoriamente
+    ; inicia 4 asteroides pseudo-aleatoriamente
+    CALL inicia_asteroide 
     CALL inicia_asteroide
     CALL inicia_asteroide
     CALL inicia_asteroide
@@ -269,9 +269,9 @@ testa_C:
     JMP obtem_tecla       ; esperamos que o jogador clique noutra tecla
 
 testa_0: ; ativa sonda esquerda
-    MOV R2, sonda_ligada
-    MOV R0, [R2]
-    CMP R0, 0 ; caso a sonda ja estaja ativa volta para o teclado
+    MOV R2, sonda_ligada    ;caso a sonda esteja ligada nao vai ser disparada outra vez
+    MOV R0, [R2]            ; entao volta ao obtem tecla
+    CMP R0, 0 
     JNZ obtem_tecla
 
     MOV R0, 1
@@ -283,8 +283,8 @@ testa_0: ; ativa sonda esquerda
     JMP obtem_tecla
 
 testa_1: ; ativa sonda meio
-    MOV R2, sonda_ligada
-    MOV R0, [R2+2]
+    MOV R2, sonda_ligada    ;caso a sonda esteja ligada nao vai ser disparada outra vez
+    MOV R0, [R2+2]          ; entao volta ao obtem tecla
     CMP R0, 0
     JNZ obtem_tecla
 
@@ -297,8 +297,8 @@ testa_1: ; ativa sonda meio
     JMP obtem_tecla
 
 testa_2: ; ativa sonda direita
-    MOV R2, sonda_ligada
-    MOV R0, [R2+4]
+    MOV R2, sonda_ligada    ;caso a sonda esteja ligada nao vai ser disparada outra vez
+    MOV R0, [R2+4]          ; entao volta ao obtem tecla
     CMP R0, 0
     JNZ obtem_tecla
 
@@ -309,13 +309,13 @@ testa_2: ; ativa sonda direita
     CALL retira_energia_sonda ; retira 5 de energia por ativarmos uma sonda
 
     JMP obtem_tecla
-retira_energia_sonda:
+retira_energia_sonda:   ;rotina que da unlock do processo energia para assim retirar 5 energia ao display
     PUSH R1
     PUSH R2
     MOV R1, 1
-    MOV R2, descontar
+    MOV R2, descontar   ;mudanca da flag de energia que averigua que quantiade descontar
     MOV [R2], R1
-    MOV [energia], R1
+    MOV [energia], R1 ;unlock da energia
     POP R2
     POP R1
     RET
@@ -332,7 +332,7 @@ teclado:
     MOV  R5, MASCARA   ; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
 
 ciclo:
-    MOV  R1, 0
+    MOV  R1, 0 ;reset do R1
 
 espera_tecla:        ; neste ciclo espera-se até uma tecla ser premida
     YIELD
@@ -1044,25 +1044,26 @@ resetar_qual:
     MOV [R1], R3
     JMP aux
 ;*********************************************************************************
-;Processo Cores
+;Processo Cores - Processo que trata da implementacao de rotinas que mudam
+;                 as cores de quatro pixeis especificos pseudo-aleatoriamente
 ;*********************************************************************************
 PROCESS SP_cores
 inicio_cor:
-    MOV R0, 1
-    MOV [ECRA], R0
-    MOV R0, 4
-    MOV R1, [cores]
+    MOV R0, 1       ; especifica no processo qual o ecra que sera usado 
+    MOV [ECRA], R0  
+    MOV R0, 4       ;numero de pixeis a pintar que e decrementado por cada pixel pintado
+    MOV R1, [cores] ;da lock ao processo cores
 ciclo_cor:
-    MOV R4, termina_jogo
+    MOV R4, termina_jogo    
     MOV R5, [R4]
     CMP R5, 1
-    JZ termina_cor
+    JZ termina_cor ; Averiguacao do estado da flag e jump para terminar a cor
     MOV R3, 0
-    CALL gerador_cor
+    CALL gerador_cor    ;rotina que gera a cor aleatoriamente
     SUB R0, 1
-    CALL pinta
+    CALL pinta ; Rotina que pinta o pixel
     CMP R0, 0
-    JNZ ciclo_cor
+    JNZ ciclo_cor ; caso ainda hajam pixeis a pintar repete o ciclo
     JMP inicio_cor
 termina_cor:
     RET
@@ -1077,7 +1078,8 @@ gerador_cor:
     SHR R2, 5 ; remove os 5 bits mais à direita (para chegar a um número de 0 a 7)
     MOV R4, cores_possiveis
     MUL R2, R0
-    MOV R3, [R4 + R2]
+    ; usa o valor aleatorio em r2 para assim descobrir uma cor da tabela e guarda em r3
+    MOV R3, [R4 + R2] 
 
     POP R0 
     POP R2
@@ -1090,15 +1092,15 @@ pinta:
     PUSH R4
     PUSH R0
 
-    MOV R4, coordenadas_cor
-    MOV R2, 4
-    MUL R0, R2
-    MOV R1, [R4 + R0]
+    MOV R4, coordenadas_cor ;tabela das coordenadas dos pixeis a pintar
+    MOV R2, 4   ;constante multiplicadora para se saltar na tabela eficientemente
+    MUL R0, R2  ;multiplicar o pixel(R0) por 4 para se descobrir a linha da tabela desse pixel
+    MOV R1, [R4 + R0]   ;guardar a sua linha respetiva
     MOV [DEFINE_LINHA], R1
-    ADD R0, 2
-    MOV R2, [R4 + R0]
+    ADD R0, 2   ;adicionar 2 para avancar na tabela
+    MOV R2, [R4 + R0]   ;guardar a coluna respetiva ao pixel
     MOV [DEFINE_COLUNA], R2 
-    MOV [DEFINE_PIXEL], R3
+    MOV [DEFINE_PIXEL], R3  ;pintar
 
     POP R0 
     POP R4 
@@ -1110,10 +1112,10 @@ pinta:
 ; Interrupcoes
 ;*********************************************************************************
 interrupcao_asteroide:
-    MOV [asteroide], R1
+    MOV [asteroide], R1 ;unlock do processo asteroide 
     RFE
-interrupcao_sonda:
-
+interrupcao_sonda:  
+    ; unlock dos processos das sondas 
     MOV [sonda1], R1
     MOV [sonda3], R1
     MOV [sonda2], R1
@@ -1121,9 +1123,11 @@ interrupcao_sonda:
     RFE
 
 interrupcao_energia:
+    ;unlock do processo de energia
     MOV  [energia], R1
     RFE
 
 interrupcao_cores:
+    ;unlock do processo cor
     MOV  [cores], R1
     RFE
