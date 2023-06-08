@@ -23,6 +23,7 @@ LIN        EQU 26           ; Linha inicial de desenho do painel
 COL        EQU 24           ; Coluna inicial do desenho do painel
 IMAGEM1    EQU 0            
 IMAGEM2    EQU 1
+IMAGEM3    EQU 2
 COLUNA_SONDA    EQU 32      ; Posicao inical da sona
 LINHA_SONDA     EQU 25      ; Posicao inicial da sonda
 SOM1            EQU 0
@@ -153,6 +154,8 @@ asteroide_atuais:
 
 energia_nave:
     WORD ENERGIA_INICIAL
+termina_jogo:
+    WORD 0
 ;*********************************************************************************
 ; Stacks 
 ;*********************************************************************************
@@ -174,7 +177,6 @@ SP_sonda3:
 
     STACK 100H
 SP_energia:
-
     STACK 100H
 SP_asteroide:
 
@@ -211,7 +213,7 @@ inicio:
     EI1
     EI2
     EI3
-    EI               
+    EI
 menu_principal:
     MOV	 R1, IMAGEM1			                    ; cenário de fundo número 0
     MOV  [SELECIONA_CENARIO_FUNDO], R1	            ; seleciona o cenário de fundo
@@ -239,7 +241,9 @@ obtem_tecla:
     JMP obtem_tecla
 
 testa_C:
-
+    MOV R4, termina_jogo ; jogo começa
+    MOV R7, 0
+    MOV [R4], R7
     CALL fundo_jogo
 
     CALL inicio_cor
@@ -401,7 +405,6 @@ linha_pixel_seg:
     POP R1
     POP R0
     RET
-
 ;*********************************************************************************
 ; SONDA 1
 ;*********************************************************************************
@@ -413,6 +416,10 @@ sonda_1:
     MOV R4, sondas
     MOV R1, [R4]
 ciclo_sonda1:
+    MOV R10, termina_jogo
+    MOV [R10], R11
+    CMP R11, 1
+    JZ termina_sonda1
     CALL desenhar_sonda1
     CMP R5, 1
     JZ termina_sonda1
@@ -423,6 +430,7 @@ ciclo_sonda1:
     CMP R5, R1
     JNZ ciclo_sonda1
 termina_sonda1:
+    MOV R4, sondas
     MOV R1, SONDA1_CORD 
     MOV [R4], R1 
     MOV [R4 + 2], R1
@@ -474,6 +482,10 @@ sonda_2:
     MOV R1, [R4 + 4]
     MOV R2, [R4 + 6]
 ciclo_sonda2:
+    MOV R10, termina_jogo
+    MOV [R10], R11
+    CMP R11, 1
+    JZ termina_sonda2
     CALL desenhar_sonda2
     CMP R5, 1
     JZ termina_sonda2
@@ -484,6 +496,7 @@ ciclo_sonda2:
     CMP R5, R1
     JNZ ciclo_sonda2
 termina_sonda2:
+    MOV R4, sondas
     MOV R1, SONDA2_LINHA
     MOV R2, SONDA2_COLUNA
     MOV [R4 + 4], R1
@@ -534,6 +547,10 @@ sonda_3:
     MOV R1, [R4 + 8]
     MOV R2, [R4 + 10]
 ciclo_sonda3:
+    MOV R10, termina_jogo
+    MOV [R10], R11
+    CMP R11, 1
+    JZ termina_sonda3
     CALL desenhar_sonda3
     CMP R5, 1
     JZ termina_sonda3
@@ -544,6 +561,7 @@ ciclo_sonda3:
     CMP R5, R1
     JNZ ciclo_sonda3
 termina_sonda3:
+    MOV R4, sondas
     MOV R1, SONDA3_LINHA
     MOV R2, SONDA3_COLUNA 
     MOV [R4 + 8], R1 
@@ -584,8 +602,6 @@ impacto3:
     MOV [R4 + 4], R5
     MOV [asteroide], R1
     RET
-
-    
 ;*********************************************************************************
 ;Processo Energia
 ;*********************************************************************************
@@ -599,13 +615,18 @@ energia_purpolsores:
     MOV R11, [R10]
 
     CMP R11, 1
-    JZ sub_5        
+    JZ sub_5
+    CMP R11, 2
+    JZ energia_as_mineravel
     JMP sub_3
 energia_ciclo:
+    CMP R9, 1
+    JLT termina_puta ;TERMINA ESTE JOGO DE MERDA AHGASDGHJKSABGKAJSB
     CALL converte
     MOV R1, [energia]
     JMP energia_purpolsores
-
+termina_energia:
+    RET
 sub_3:
     SUB R9, 3
     JMP energia_ciclo
@@ -617,9 +638,22 @@ sub_5:
     MOV [R10], R0 
 
     JMP energia_ciclo
-; (das perdas de energia ao disparar e os ganhos ao minerar asteroides bons)
-; energia_disparo
-; energia_as_mineravel
+energia_as_mineravel:
+    MOV R6, 25H
+    ADD R9, R6
+    MOV R0, 0
+    MOV [R10], R0 
+    JMP energia_ciclo
+
+termina_puta:
+    MOV R6, termina_jogo ;ativa a flag para terminar o jogo
+    MOV R7, 1
+    MOV [R6], R7
+    MOV [APAGA_AVISO], R1
+    MOV [APAGA_ECRÃ], R1
+    MOV R7, IMAGEM3
+    MOV [SELECIONA_CENARIO_FUNDO], R7
+    JMP termina_energia
 
 converte:
     MOV R0, DISPLAYS
@@ -687,6 +721,7 @@ posicao_asteroide:
     JZ inicia_dir
 inicia_esq:
     MOV R2, ASTEROIDE_ESQ ; coluna inicial
+    CALL tester_esq
     JMP ciclo_esq
 inicia_meio:
     MOV R2, ASTEROIDE_MEIO
@@ -699,53 +734,76 @@ inicia_meio:
     CMP R3, R11
     JZ ciclo_dir
 
+    CALL tester_meio ;Call para rotina que verifica se e para terminar o asteroide do meio
     JMP ciclo_meio
 
-;*******************
+inicia_dir:
+    MOV R2, ASTEROIDE_DIR
+    CALL tester_dir
+    JMP ciclo_dir
 asteroide_destruido_esq:
     MOV R1, explosao_sprite
     MOV R8, impacto_flags
     MOV R11, 0
     MOV [R8], R11
+    MOV R6, [R4]
 
+    CMP R6, 0
+    JZ aumenta_energia
+termina_asteroide_esq:
     CALL inicia_asteroide
     CALL desenha_pixels_as
     MOV R1, [asteroide]
     MOV R1, [asteroide]
     CALL apaga_as_esq
-
+termina_defenitivamente_esq:
     RET
 asteroide_destruido_meio:
     MOV R1, explosao_sprite
     MOV R8, impacto_flags
     MOV R11, 0
     MOV [R8 + 2], R11
-
-    ;Asteroiod e  mineravel
-
+    MOV R6, [R4]
+    ;aumenta energia 25
+    CMP R6, 0
+    JZ aumenta_energia
+termina_asteroide_meio:
     CALL inicia_asteroide
     CALL desenha_pixels_as
     MOV R1, [asteroide]
     MOV R1, [asteroide]
     CALL apaga_as_meio
-
+termina_defenitivamente_meio:
     RET
 asteroide_destruido_dir:
     MOV R1, explosao_sprite
     MOV R8, impacto_flags
     MOV R11, 0
     MOV [R8 + 4], R11
-    
+    MOV R6, [R4]
+
+    CMP R6, 0
+    JZ aumenta_energia
+termina_asteroide_dir:
     CALL inicia_asteroide
     CALL desenha_pixels_as
     MOV R1, [asteroide]
     MOV R1, [asteroide]
     CALL apaga_as_dir
-
+termina_defenitivamente_dir:
     RET
-inicia_dir:
-    MOV R2, ASTEROIDE_DIR
-    JMP ciclo_dir
+
+tester_esq:
+    PUSH R1
+    PUSH R2
+    MOV R2, termina_jogo
+    MOV R1, [R2]
+    CMP R1, 1
+    JZ termina_defenitivamente_esq
+    POP R2
+    POP R1
+    RET
+
 ciclo_esq:
     CALL desenha_pixels_as
 
@@ -761,6 +819,18 @@ ciclo_esq:
     MOV R1, R6
     CMP R7, R9
     JNZ ciclo_esq
+
+tester_meio:
+    PUSH R1
+    PUSH R2
+    MOV R2, termina_jogo
+    MOV R1, [R2]
+    CMP R1, 1
+    JZ termina_asteroide_meio
+    POP R2
+    POP R1
+    RET
+
 ciclo_meio:
     CALL desenha_pixels_as
 
@@ -777,6 +847,16 @@ ciclo_meio:
     CMP R7, R9
     JNZ ciclo_meio
 
+tester_dir:
+    PUSH R1
+    PUSH R2
+    MOV R2, termina_jogo
+    MOV R1, [R2]
+    CMP R1, 1
+    JZ termina_asteroide_dir
+    POP R2
+    POP R1
+    RET
 ciclo_dir:
     CALL desenha_pixels_as
 
@@ -792,6 +872,19 @@ ciclo_dir:
     MOV R1, R6
     CMP R7, R9
     JNZ ciclo_dir
+aumenta_energia:
+    MOV [energia], R1
+    PUSH R3
+    MOV R3, 2
+    MOV R6, descontar
+    MOV [R6], R3
+    POP R3
+    CMP R3, 0FFFFH
+    JZ termina_asteroide_esq
+    CMP R3, 0
+    JZ termina_asteroide_meio
+    CMP R3, 1
+    JZ termina_asteroide_dir
 
 desenha_pixels_as:
     MOV R8, [R1]
@@ -906,7 +999,10 @@ determina_dir:
 	POP R6
 	POP R5
 	RET
-    
+
+;*********************************************************************************
+;Funcoes que tem o objetivo de detetar e especificar os ecras de cada asteroide
+;*********************************************************************************
 incrementar_asteroide: ;funcao que avanca qual o ecra do asteroide
     PUSH R1
     PUSH R2 
@@ -927,8 +1023,6 @@ resetar_qual:
 
     MOV [R1], R3
     JMP aux
-
-
 ;*********************************************************************************
 ;Processo Cores
 ;*********************************************************************************
@@ -939,6 +1033,10 @@ inicio_cor:
     MOV R0, 4
     MOV R1, [cores]
 ciclo_cor:
+    MOV R4, termina_jogo
+    MOV R5, [R4]
+    CMP R5, 1
+    JZ termina_cor
     MOV R3, 0
     CALL gerador_cor
     SUB R0, 1
@@ -946,6 +1044,8 @@ ciclo_cor:
     CMP R0, 0
     JNZ ciclo_cor
     JMP inicio_cor
+termina_cor:
+    RET
 gerador_cor:
     PUSH R1
     PUSH R2
